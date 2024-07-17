@@ -15,13 +15,21 @@
       "supportsTablet": true
     },
     "android": {
+      "permissions": [
+        "WAKE_LOCK",
+        "RECEIVE_BOOT_COMPLETED"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.abhishektyronefella.TaskBuddy"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "web": {},
+    "extra": {
+      "eas": {
+        "projectId": "07710858-c47a-4439-bbf6-a1c9ac2523ab"
+      }
     }
   }
 }
