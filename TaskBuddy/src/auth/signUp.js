@@ -1,12 +1,8 @@
-import '../../firebaseConfig.js';
+import { db } from '../../firebaseConfig.js';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import { getDatabase, set, ref } from 'firebase/database';
-
+import { getFirestore, set, ref } from 'firebase/database';
 
 const auth = getAuth();
-const db = getDatabase();
-
-
 
 const createUser = (email, password, onChangeLoggedInUser, onError) => {
      createUserWithEmailAndPassword(auth, email, password)

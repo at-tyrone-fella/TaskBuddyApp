@@ -1,20 +1,33 @@
 import React from 'react';
-import {View,Text, StyleSheet} from 'react-native';
+import {Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 const CreateTask = () => {
+
   return (
-        <View style={styles.create}>
-          <Text >+ Create Task</Text>
-        </View>
+    <TouchableOpacity
+      style={[styles.buttonContainer, { backgroundColor: '#ffc300' }]}
+      onPress={() => {}}
+    >
+      <Text style={styles.buttonText}>New Task</Text>
+    </TouchableOpacity>
     );
 };
 
 const styles = StyleSheet.create({
-  create: {
-    fontSize: 30,
+  buttonContainer: {
+    marginTop: 20, 
+    paddingHorizontal: 10, 
+    borderRadius: 5,
+    width: 90,
+    height: 30,
+    alignItems: 'center',
+  },
+    buttonText: {
+    color: 'rgb(0, 0, 0)', 
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
-  }
+    alignSelf: 'center',
+ },
 });
 
 export default CreateTask;

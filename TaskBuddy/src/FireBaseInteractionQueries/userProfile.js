@@ -1,17 +1,19 @@
 import '../../firebaseConfig'
-import {getDoc, doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import * as SecureStore from 'expo-secure-store';
 import { db } from '../../firebaseConfig';
 
 export const addUserProfile = async (userProfileData) => {
+
+  
+  const uid = await SecureStore.getItemAsync('userID');
+  if (!uid) throw new Error("No user ID found in SecureStore");
+
   try {
-    const uid = await SecureStore.getItemAsync('userID');
-    if (!uid) throw new Error("No user ID found in SecureStore");
 
     const docRef = doc(db, "users", uid);
     await setDoc(docRef, userProfileData);
 
- //   console.log("Document written with ID: ", docRef.id);
     return true;
   } catch (e) {
     console.error("Error adding document: ", e);
@@ -19,25 +21,36 @@ export const addUserProfile = async (userProfileData) => {
   }
 };
 
-export const getUserProfiles = async () => {
-  // Fetch uid from secure Store
+export const getUserProfiles = async (callback) => {
+
+  
   const uid = await SecureStore.getItemAsync('userID');
   if (!uid) throw new Error("No user ID found in SecureStore");
 
-  //console.log("UID after fetch up: ", uid);
+  onSnapshot(doc(db, "users", uid), (doc) => {
+    if(doc.exists()) {
+      callback(doc.data());
+    } else {
+      callback('');
+      console.log("No such document!");
+    };
+  });
 
-  // Fetch the user document with the user ID from the "users" collection
-  const docRef = doc(db, "users", uid);
-  const docSnap = await getDoc(docRef);
-
-
-  if (docSnap.exists()) {
-    const userProfile = { ...docSnap.data(), id: uid };
-  //  console.log("User Profile: ", userProfile);
-    return userProfile;
-  } else {
-    throw new Error("No such document!");
-  }
 };
 
-export default {addUserProfile, getUserProfiles};
+export const getUserName = async (callback) => {
+  const uid = await SecureStore.getItemAsync('userID');
+  if (!uid) throw new Error("No user ID found in SecureStore");
+
+  return onSnapshot(doc(db, "users", uid), (doc) => {
+    if (doc.exists()) {
+      callback(doc.data().username);
+    } else {
+      callback('');
+      console.error("No such document!");
+    }
+  }, (error) => {
+    callback('');
+    console.error("Error fetching username:", error);
+  });
+};

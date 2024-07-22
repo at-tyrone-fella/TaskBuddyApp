@@ -69,7 +69,7 @@ export default function App() {
     <AuthProvider>
     <Wrapper>
         <AppNavigator />
-      </Wrapper>
+    </Wrapper>
     </AuthProvider>
   );
 }

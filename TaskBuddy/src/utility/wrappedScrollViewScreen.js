@@ -8,6 +8,7 @@ import SignInScreen from "../screens/SignInScreen";
 import HomePage from "../screens/HomePage";
 import UserProfile from "../screens/UserProfile";
 
+
 const ScrollWrappedLanding = AddScrollView(Landing);
 const ScrollWrappedSignUp = AddScrollView(SignUpScreen);
 const ScrollWrappedSignInForm = AddScrollView(SignInForm);

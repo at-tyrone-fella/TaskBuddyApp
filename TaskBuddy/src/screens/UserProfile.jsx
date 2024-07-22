@@ -33,28 +33,35 @@ const UserProfile = ({ navigation }) => {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const userProfile = await getUserProfiles();
-      if (userProfile) {
-        setCountry(userProfile.country || '');
-        setUsername(userProfile.username || '');
-        setFirstName(userProfile.firstName || '');
-        setLastName(userProfile.lastName || '');
-        setGender(userProfile.gender || '');
-        setDob(userProfile.dob ? new Date(userProfile.dob) : new Date());
-        setContactNumber(userProfile.contactNumber || '');
-        setExtension(userProfile.extension || 'US');
-        setTimezone(userProfile.timezone || '');
-        setAddress(userProfile.address || '');
-        setPreferredCurrency(userProfile.preferredCurrency || '');
-        setEmail(userProfile.email || emailId);
-       // console.log('User Profile after fetch:', userProfile);  
+      
+      try{
+        const unsubscribe = await getUserProfiles(
+          (userProfile) => {
+        if (userProfile) {
+            setCountry(userProfile.country || '');
+            setUsername(userProfile.username || '');
+            setFirstName(userProfile.firstName || '');
+            setLastName(userProfile.lastName || '');
+            setGender(userProfile.gender || '');
+            setDob(userProfile.dob ? new Date(userProfile.dob) : new Date());
+            setContactNumber(userProfile.contactNumber || '');
+            setExtension(userProfile.extension || 'US');
+            setTimezone(userProfile.timezone || '');
+            setAddress(userProfile.address || '');
+            setPreferredCurrency(userProfile.preferredCurrency || '');
+            setEmail(userProfile.email || emailId);
+            }
+          }
+        );
+        return unsubscribe;
+      } catch (error) {
+        console.log('Error fetching user profile: ', error);
       }
+      
     };
 
     fetchUserProfile();
   }, []);
-
- // console.log('usernmae:', username); 
 
   const  onSubmit  = async () => {
 
@@ -81,9 +88,16 @@ const UserProfile = ({ navigation }) => {
     {
       Alert.alert('Successfully updated !!', 'Your profile is now up to date.' ,[
                 {
-                    text: 'OK',
+                    text: 'Ok',
                     onPress: () => {
-                        navigation.navigate('UserProfile');
+                        navigation.navigate('HomePage');
+                    }
+                },
+                {
+                    text: 'View Profile',
+                    onPress: () => {
+                        setEdit(false);
+                        navigation.navigate('UserPage');
                     }
                 }
             ]);
@@ -139,8 +153,6 @@ const UserProfile = ({ navigation }) => {
               placeholder="Username"
               value={username}
               onChangeText={(value) => {setUsername(value);
-                console.log('Username:', value); 
-                console.log('Username:', username);
               }}
               editable={edit}
             />

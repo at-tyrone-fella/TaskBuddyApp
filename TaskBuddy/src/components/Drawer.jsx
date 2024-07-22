@@ -21,25 +21,28 @@ const Drawer = ({ navigation }) => {
         <Text style={styles.drawerHeaderText}>Menu</Text>
       </View>
       <View style={styles.drawerItemContainer}>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem}>
           <Text style={styles.drawerItemText}>My Tasks</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem}>
           <Text style={styles.drawerItemText}>My Expenses</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem}>
+          <Text style={styles.drawerItemText}>My Projects</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.drawerItem}>
           <Text style={styles.drawerItemText}>Reports / Analytics</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem}>
           <Text style={styles.drawerItemText}>My Organization</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem}>
           <Text style={styles.drawerItemText}>My Clients</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem}>
           <Text style={styles.drawerItemText}>My Teams</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem} >
           <Text style={styles.drawerItemText}>My Profile</Text>
         </TouchableOpacity>
       </View>
@@ -54,18 +57,21 @@ const Drawer = ({ navigation }) => {
       ref={drawer}
       drawerWidth={300}
       drawerPosition={drawerPosition}
-      renderNavigationView={navigationView}
+      renderNavigationView={() => navigationView()}
     >
       <View style={styles.navigationContainer}>
       <View style={styles.drawerHeader}>
         <Text style={styles.drawerHeaderText}>Menu</Text>
       </View>
       <View style={styles.drawerItemContainer}>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('HomePage')}>
           <Text style={styles.drawerItemText}>My Tasks</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
           <Text style={styles.drawerItemText}>My Expenses</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+          <Text style={styles.drawerItemText}>My Projects</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
           <Text style={styles.drawerItemText}>Reports / Analytics</Text>

@@ -4,7 +4,7 @@ import { ScrollView } from "react-native";
 const AddScrollView = ( WrappedComponent ) => {
   return(props) => (
     <ScrollView>
-      <WrappedComponent {...props}/>
+        <WrappedComponent {...props}/>
     </ScrollView>
   );
 };

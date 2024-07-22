@@ -27,7 +27,7 @@ const SignUpScreen = ({navigation}) => {
             },]}>
             Already have an account? Sign In to your account.
         </Banner>
-        <TouchableWithoutFeedback onPress={() => setVisible(false)}>
+        <TouchableWithoutFeedback>
           <View style={styles.centeredView}>
             <SignUpForm navigation={navigation}/>
           </View>

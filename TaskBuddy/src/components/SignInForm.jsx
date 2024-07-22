@@ -3,13 +3,22 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-nativ
 import { Card, Button } from "react-native-paper";
 import { width, height } from "../utility/DimensionsUtility";
 import SignInUser from "../auth/SignIn";
-import { useAuth } from '../auth/AuthContext.js';    
+import { useAuth } from '../auth/AuthContext.js';  
+import { MaterialCommunityIcons } from "@expo/vector-icons";  
+
+/**Update email and pass states to ""...values put for testing */
 
 const SignInForm = ({ navigation }) => {
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [email, setEmail] = useState("at56725111998@gmail.com");
+    const [password, setPassword] = useState("Pawg@1000");
     const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(true);
+
+    const switchShowPassword = () => {
+        setShowPassword(!showPassword);
+    };
+
     const { login } = useAuth();
 
     const SignIn = (email,password) => {
@@ -22,7 +31,7 @@ const SignInForm = ({ navigation }) => {
                     setError("");
                     SignInUser(email,password,navigation,login,
                         () => {
-                            navigation.navigate('HomePage', {email: email});
+                            navigation.navigate('HomePage' );
                         },
                         (errorMessage) => {
                             setError(errorMessage);
@@ -38,27 +47,36 @@ const SignInForm = ({ navigation }) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Email"
+                    value={'at56725111998@gmail.com'}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    value={email}
                     autoCorrect={false}
                     onChangeText={(text) => {
                         setEmail(text);
                         setError("");
                     }}
                 />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    secureTextEntry
-                    autoCapitalize="none"
-                    value={password}
-                    autoCorrect={false}
-                    onChangeText={(text) => {
-                        setPassword(text);
-                        setError("");
-                    }}
-                />
+                <View style={styles.inputContainer}> 
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Password"
+                        autoCapitalize="none"
+                        value={'Pawg@1000'}
+                        autoCorrect={false}
+                        secureTextEntry={showPassword}
+                        onChangeText={(text) => {
+                            setPassword(text);
+                            setError("");
+                        }}
+                    />
+                    <MaterialCommunityIcons 
+                        name={showPassword ? 'eye-off' : 'eye'} 
+                        size={24} 
+                        color="#aaa"
+                        style={styles.icon} 
+                        onPress={switchShowPassword} 
+                    />
+                </View>
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <Text style={styles.smallText}>
                     Not a member? 
@@ -80,9 +98,17 @@ const styles = StyleSheet.create({
         marginVertical: height * 0.02,
         padding: Math.round(width * 0.02 + height * 0.04) / 2,
         borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
+        width: width * 0.9,
         },
     container: {
         alignItems: "center",
+    },
+     inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderColor: '#ccc',
+        width: "99%",
     },
     text: {
         fontSize: 18,
@@ -113,6 +139,14 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: height * 0.025,
     },
+    input: {
+        width: "100%",
+        marginBottom: height * 0.015,
+        padding: width * 0.015,
+        borderColor: "#ddd",
+        borderWidth: 2,
+        borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
+    },
     button : {
         width: 250,
         borderRadius: 25,
@@ -120,6 +154,13 @@ const styles = StyleSheet.create({
     errorText: {
         color: 'red',
         marginBottom: 16,
+    },
+     icon: {
+        position: 'absolute',
+        right: 10,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

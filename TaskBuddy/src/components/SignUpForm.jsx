@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, StyleSheet } from "react-native";
 import { Card, Button, Checkbox } from "react-native-paper";
 import { width, height } from "../utility/DimensionsUtility";
 import { FontPreferences } from "../utility/FontPreferences";
 import { createUser,  getMessages }  from "../auth/signUp";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const SignUpForm = ({ navigation }) => {
 
@@ -14,9 +15,9 @@ const SignUpForm = ({ navigation }) => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(true);
 
     const createSignUp = () => {
-
         if(email === "" || password === "" || confirmPassword === "") {
             setError("Please fill in all fields.");
             setIsSubmitted(false);
@@ -44,7 +45,11 @@ const SignUpForm = ({ navigation }) => {
         (errorMessage) => {
             setError(getMessages(errorMessage));
         });
-};
+    };
+
+    const toggleShowPassword = () => {
+        setShowPassword(!showPassword);
+    };
 
     return (
         <Card style={styles.card}>
@@ -56,26 +61,36 @@ const SignUpForm = ({ navigation }) => {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
-                    value = {email}
+                    value={email}
                     onChangeText={setEmail}
                 />
                 <TextInput
                     style={styles.input}
                     placeholder="Password"
-                    secureTextEntry
+                    secureTextEntry={true}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    value = {password}
+                    value={password}
                     onChangeText={setPassword}
                 />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Confirm Password"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    value = {confirmPassword}
-                    onChangeText={setConfirmPassword}
-                />
+                <View style={styles.inputContainer}> 
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Confirm Password"
+                        secureTextEntry={showPassword}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                    />
+                    <MaterialCommunityIcons 
+                        name={showPassword ? 'eye-off' : 'eye'} 
+                        size={24} 
+                        color="#aaa"
+                        style={styles.icon} 
+                        onPress={toggleShowPassword} 
+                    />
+                </View>
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <View style={styles.checkboxContainer}>
                     <Checkbox
@@ -85,10 +100,7 @@ const SignUpForm = ({ navigation }) => {
                     <Text style={[styles.checkboxText, isSubmitted && !checked && styles.highlight]}>I want to join TaskBuddy.</Text>
                 </View>
                 <View style={styles.buttonContainer}>
-                    <Button mode="contained" onPress={() => {
-                      createSignUp(email,password,confirmPassword);
-                    }}
-                    style={styles.button}>Sign Up</Button>
+                    <Button mode="contained" onPress={createSignUp} style={styles.button}>Sign Up</Button>
                 </View>
             </View>
         </Card>
@@ -100,6 +112,14 @@ const styles = StyleSheet.create({
         marginVertical: height * 0.05,
         padding: Math.round(width * 0.02 + height * 0.04) / 2,
         borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
+        width: width * 0.8, 
+        alignSelf: 'center', 
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderColor: '#ccc',
     },
     container: {
         alignItems: "center",
@@ -142,18 +162,25 @@ const styles = StyleSheet.create({
         borderRadius: 25,
     },
     errorText: {
-    color: 'red',
-    marginBottom: 10,
-  },
-  checkboxChecked: {
-    width: 16,
-    height: 16,
-    backgroundColor: '#000',
-  },
-  highlight: {
-    borderColor: 'red',
-    borderWidth: 2,
-  },
+        color: 'red',
+        marginBottom: 10,
+    },
+    checkboxChecked: {
+        width: 16,
+        height: 16,
+        backgroundColor: '#000',
+    },
+    highlight: {
+        borderColor: 'red',
+        borderWidth: 2,
+    },
+    icon: {
+        position: 'absolute',
+        right: 10,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 });
 
 export default SignUpForm;
