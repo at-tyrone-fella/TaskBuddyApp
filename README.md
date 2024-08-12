@@ -8,4 +8,6 @@ Next Commit Objectives : Create My Tasks calendar UI . Create Tasks and Projects
 
 Second commit (22-July-2024) : My Tasks with calendar UI is now completed. Few aspects remain which will be done in upcoming dev .
 
-Next Commit : Create Organizations/ PRojects and Tasks. DEvelop UI and backend support for this.
+Third Commit (12-AUG-2024) : This is major commit in this project. Calendar(My Task) is now more interactive with ability to create tasks on longpress hour or with button in header. My Organization/ My projects feature is now implemented. Tasks allowed to record expense. Notifications are being sent and received to members on organization creation.
+
+Next Commit : Fix corner cases for app and improve data validation . Attempt to integrate Google Calendar, perform formal Testing.

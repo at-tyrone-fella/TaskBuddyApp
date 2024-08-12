@@ -5,8 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import Drawer from './components/Drawer.jsx';
-import { ScrollWrappedLanding, ScrollWrappedSignInForm, ScrollWrappedSignUp, ScrollWrappedSignInScreen, ScrollWrappedHomePage, ScrollWrappedUserProfile } from './utility/wrappedScrollViewScreen.js';
-import { View, ActivityIndicator } from 'react-native';
+import { ScrollWrappedLanding, ScrollWrappedSignInForm, ScrollWrappedSignUp, ScrollWrappedSignInScreen, ScrollWrappedHomePage, ScrollWrappedUserProfile, ScrollWrappedOrganization, ScrollWrappedCreateClient, ScrollWrappedProject, ScrollWrappedNotification } from './utility/wrappedScrollViewScreen.js';
 import { registerBackgroundFetchTask, unregisterBackgroundFetchTask } from './utility/backgroundTokenRefresh.js';
 
 const Stack = createNativeStackNavigator();
@@ -29,20 +28,16 @@ const DrawerNavigator = () => {
       <DrawerStack.Screen name="HomePage" component={ScrollWrappedHomePage} options={{ headerShown: false }}/>
       <DrawerStack.Screen name="SignUp" component={ScrollWrappedSignUp} options={{ headerShown: false }} />
       <DrawerStack.Screen name="UserProfile" component={ScrollWrappedUserProfile} options={{ headerShown: false }} />
+      <DrawerStack.Screen name="Organization" component={ScrollWrappedOrganization} options={{ headerShown: false }} />
+      <DrawerStack.Screen name="CreateClient" component={ScrollWrappedCreateClient} options={{ headerShown: false }} />
+      <DrawerStack.Screen name="Projects" component={ScrollWrappedProject} options={{ headerShown: false }} />
+      <DrawerStack.Screen name='Notification' component={ScrollWrappedNotification} options={{headerShown: false}} />
     </DrawerStack.Navigator>
   );
 };
 
 const AppNavigator = () => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  const { isAuthenticated } = useAuth();
 
   return (
     <NavigationContainer>
@@ -67,9 +62,10 @@ export default function App() {
 
   return (
     <AuthProvider>
-    <Wrapper>
-        <AppNavigator />
-    </Wrapper>
+      <Wrapper>
+          <AppNavigator />
+      </Wrapper>
     </AuthProvider>
+
   );
 }

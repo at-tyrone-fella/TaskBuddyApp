@@ -18,7 +18,6 @@ const SignInUser = (email, password, navigation, login, onSuccess, onError) => {
                     text: 'OK',
                     onPress: () => {
                         login(user);
-                        onSuccess(navigation.navigate('HomePage'));
                     }
                 }
             ]);

@@ -36,3 +36,5 @@ yarn-error.*
 
 # file_to_be_ignored
 File_Ignore.txt
+google-services.json
+firebaseConfig.js

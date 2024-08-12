@@ -4,10 +4,10 @@
     "slug": "TaskBuddy",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -15,17 +15,20 @@
       "supportsTablet": true
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "WAKE_LOCK",
         "RECEIVE_BOOT_COMPLETED"
       ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "",
         "backgroundColor": "#ffffff"
       },
       "package": "com.abhishektyronefella.TaskBuddy"
     },
-    "web": {},
+    "web": {
+            "authSessionRedirectScheme": "https"
+    },
     "extra": {
       "eas": {
         "projectId": "07710858-c47a-4439-bbf6-a1c9ac2523ab"

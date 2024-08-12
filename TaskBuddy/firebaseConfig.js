@@ -1,7 +1,8 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from 'firebase/auth';
-import { getDatabase } from 'firebase/database';
-import { getFirestore } from 'firebase/firestore';
+const { initializeApp } = require('firebase/app');
+const { getAuth } = require('firebase/auth');
+const { getFirestore } = require('firebase/firestore');
+const { getStorage } = require('firebase/storage');
+const { GoogleAuthProvider } = require('firebase/auth');
 
 const firebaseConfig = {
   apiKey: "AIzaSyAbXyb_BdBtELbiR2Kyf-yOgKC5Xa01ccY",
@@ -15,7 +16,11 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
+const provider = new GoogleAuthProvider();
+provider.addScope('https://www.googleapis.com/auth/calendar');
 
-export { auth, db } ;
+module.exports = { auth, db, storage, provider };

@@ -7,7 +7,6 @@ export const fetchUserRecord = () => {
     if(currentUser)
     {
         const userEmail = currentUser.email;
-     //   console.log('User is signed in:', userEmail);
         return userEmail;
     }
     else {

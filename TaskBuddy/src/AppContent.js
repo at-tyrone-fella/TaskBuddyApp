@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { View, Text, Button, ActivityIndicator } from 'react-native';
 import { AuthContext } from './auth/AuthContext';
 
-
 const AppContent = () => {
   const { user, loading, signIn, logOut } = useContext(AuthContext);
 
@@ -20,7 +19,7 @@ const AppContent = () => {
       ) : (
         <>
           <Text>Please sign in</Text>
-          <Button title="Sign In" onPress={() => NavigationPreloadManager.navigate('Scr')} />
+          <Button title="Sign In" onPress={() => Navigation.navigate('Scr')} />
         </>
       )}
     </View>

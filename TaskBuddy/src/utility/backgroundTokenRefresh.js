@@ -4,7 +4,7 @@ import { auth } from '../../firebaseConfig';
 import * as SecureStore from 'expo-secure-store';
 
 const BACKGROUND_FETCH_TASK = 'Background-Refresh-Token';
-const timeToRefreshToken = 1;
+const timeToRefreshToken = 48;
 
 TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
 
@@ -30,7 +30,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
    
   export const  registerBackgroundFetchTask = async () => {
     return BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-      minimumInterval: timeToRefreshToken * 60, // time to refresh token in minutes
+      minimumInterval: timeToRefreshToken * 60, 
       stopOnTerminate: false,
       startOnBoot: true,
     });

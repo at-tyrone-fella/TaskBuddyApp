@@ -12,17 +12,19 @@ const Drawer = ({ navigation }) => {
 
   const handleLogout = () => {
     logout();
-    navigation.navigate('Landing');
   };
 
   const navigationView = () => (
     <View style={styles.navigationContainer}>
       <View style={styles.drawerHeader}>
-        <Text style={styles.drawerHeaderText}>Menu</Text>
+        <Text style={styles.drawerHeaderText}>Menu</Text> 
       </View>
       <View style={styles.drawerItemContainer}>
         <TouchableOpacity style={styles.drawerItem}>
           <Text style={styles.drawerItemText}>My Tasks</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.drawerItem}>
+          <Text style={styles.drawerItemText}>My Notifications</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.drawerItem}>
           <Text style={styles.drawerItemText}>My Expenses</Text>
@@ -67,19 +69,22 @@ const Drawer = ({ navigation }) => {
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('HomePage')}>
           <Text style={styles.drawerItemText}>My Tasks</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Notification')}>
+          <Text style={styles.drawerItemText}>My Notifications</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
           <Text style={styles.drawerItemText}>My Expenses</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Projects')}>
           <Text style={styles.drawerItemText}>My Projects</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
           <Text style={styles.drawerItemText}>Reports / Analytics</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('Organization')}>
           <Text style={styles.drawerItemText}>My Organization</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>
+        <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('CreateClient')}>
           <Text style={styles.drawerItemText}>My Clients</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.drawerItem} onPress={() => navigation.navigate('')}>

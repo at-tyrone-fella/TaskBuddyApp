@@ -1,19 +1,21 @@
-import { React, useState } from "react";
+import { React, useEffect, useState } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { Card, Button } from "react-native-paper";
 import { width, height } from "../utility/DimensionsUtility";
 import SignInUser from "../auth/SignIn";
 import { useAuth } from '../auth/AuthContext.js';  
 import { MaterialCommunityIcons } from "@expo/vector-icons";  
-
-/**Update email and pass states to ""...values put for testing */
+import { updatePushToken } from "../FireBaseInteractionQueries/userProfile.js";
+import * as SecureStore from 'expo-secure-store';
 
 const SignInForm = ({ navigation }) => {
 
-    const [email, setEmail] = useState("at56725111998@gmail.com");
-    const [password, setPassword] = useState("Pawg@1000");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [pushToken, setPushToken] = useState(null);
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(true);
+
 
     const switchShowPassword = () => {
         setShowPassword(!showPassword);
@@ -31,6 +33,16 @@ const SignInForm = ({ navigation }) => {
                     setError("");
                     SignInUser(email,password,navigation,login,
                         () => {
+                            const isSetToke = updatePushToken({pushToken: pushToken});
+
+                            if(isSetToke){
+                                SecureStore.setItemAsync('pushToken', pushToken);
+                                console.log("Push Token set successfully",pushToken);
+                            }
+                            else{
+                                console.log("Push Token not set successfully",pushToken);
+                            }
+
                             navigation.navigate('HomePage' );
                         },
                         (errorMessage) => {
@@ -47,7 +59,7 @@ const SignInForm = ({ navigation }) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Email"
-                    value={'at56725111998@gmail.com'}
+                    value={email}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -61,7 +73,7 @@ const SignInForm = ({ navigation }) => {
                         style={styles.input}
                         placeholder="Password"
                         autoCapitalize="none"
-                        value={'Pawg@1000'}
+                        value={password}
                         autoCorrect={false}
                         secureTextEntry={showPassword}
                         onChangeText={(text) => {

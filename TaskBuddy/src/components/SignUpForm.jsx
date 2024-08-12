@@ -8,7 +8,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const SignUpForm = ({ navigation }) => {
 
-    /**Setting up state for Email and Password */
     const [checked, setChecked] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [email, setEmail] = useState("");
@@ -43,6 +42,7 @@ const SignUpForm = ({ navigation }) => {
             navigation.navigate('ScrollSignInScreen', {userRegistered: true});
             },
         (errorMessage) => {
+            console.log("Error Message: ", errorMessage);
             setError(getMessages(errorMessage));
         });
     };

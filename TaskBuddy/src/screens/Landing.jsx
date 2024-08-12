@@ -6,7 +6,6 @@ import SignInForm from "../components/SignInForm.jsx";
 import { width, height } from "../utility/DimensionsUtility.js";
 import { FontPreferences } from "../utility/FontPreferences.js";
 
-/** Code to use state maangement to toggle Modal */  
 const Landing = ({ navigation }) => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);

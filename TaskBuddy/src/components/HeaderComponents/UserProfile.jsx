@@ -22,7 +22,6 @@ const UserProfile = () => {
     fetchUserName();
   }, []);
 
-
   return (
         <View style={styles.profile}>
           <Text style={styles.text} > Welcome! </Text>

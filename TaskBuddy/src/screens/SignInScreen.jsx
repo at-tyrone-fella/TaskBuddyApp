@@ -5,7 +5,6 @@ import SignInForm from "../components/SignInForm.jsx";
 import { useRoute } from '@react-navigation/native';
 import { Banner } from "react-native-paper";
 
-/**Time to Hide Banner */
 const secondsToHide = 60000;
 
 const SignInScreen = ( {navigation } ) => {

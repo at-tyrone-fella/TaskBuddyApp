@@ -15,9 +15,7 @@ export const AuthProvider = ({ children }) => {
       const token = await SecureStore.getItemAsync('userToken');
       const userID = await SecureStore.getItemAsync('userID');
       const refreshToken = await SecureStore.getItemAsync('refreshToken');
-      /**
-       * IF the tokens exist, try to login with it.
-       */
+      
       if (token && refreshToken) {
         try {
           await auth().signInWithCustomToken(refreshToken);
@@ -49,9 +47,6 @@ export const AuthProvider = ({ children }) => {
       await SecureStore.setItemAsync('userID', user.userId);
       setIsAuthenticated(true);
       setUserID(user.userId);
-    //  console.log('User logged in:', user);
-    //  console.log('token ID:', await SecureStore.getItemAsync('userToken')  );
-    //  console.log('refresh token:', await SecureStore.getItemAsync('refreshToken')  );
     } catch (e) {
       console.error(e);
     }

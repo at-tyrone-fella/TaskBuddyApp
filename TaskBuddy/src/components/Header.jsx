@@ -6,7 +6,7 @@ import CreateTask from './HeaderComponents/CreateTask';
 import { width, height } from '../utility/DimensionsUtility';
 import { Button } from 'react-native-paper';
 
-const Header = ({ navigation, screenName, calendarState, setCalendarState, calendarColour, setCalendarColour }) => {
+const Header = ({ navigation, screenName, calendarState, setCalendarState, calendarColour, setCalendarColour, setShowTaskModal }) => {
 
   const changeCalendarState = async () => {
     await setCalendarState(true);
@@ -37,7 +37,7 @@ const Header = ({ navigation, screenName, calendarState, setCalendarState, calen
         )}
         <View style={styles.spacer} /> 
         <View style={styles.create}>
-          <CreateTask />
+          <CreateTask navigation={navigation} setShowTaskModal={setShowTaskModal}/>
         </View>
       </View>
     </SafeAreaView>
