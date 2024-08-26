@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {View,Text, StyleSheet} from 'react-native';
 import { FontPreferences } from '../../utility/FontPreferences';
-import { getUserName } from '../../FireBaseInteractionQueries/userProfile';
+import { getUserName } from '../../FireBaseInteraction/userProfile';
 
 const UserProfile = () => {
 

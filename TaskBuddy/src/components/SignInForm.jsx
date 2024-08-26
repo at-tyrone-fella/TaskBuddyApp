@@ -1,21 +1,18 @@
-import { React, useEffect, useState } from "react";
+import { React, useState } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { Card, Button } from "react-native-paper";
 import { width, height } from "../utility/DimensionsUtility";
 import SignInUser from "../auth/SignIn";
 import { useAuth } from '../auth/AuthContext.js';  
 import { MaterialCommunityIcons } from "@expo/vector-icons";  
-import { updatePushToken } from "../FireBaseInteractionQueries/userProfile.js";
-import * as SecureStore from 'expo-secure-store';
+import PropTypes from 'prop-types';
 
 const SignInForm = ({ navigation }) => {
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [pushToken, setPushToken] = useState(null);
+    const [email, setEmail] = useState("at56725111998@gmail.com");
+    const [password, setPassword] = useState("Pawg@1000");
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(true);
-
 
     const switchShowPassword = () => {
         setShowPassword(!showPassword);
@@ -24,33 +21,31 @@ const SignInForm = ({ navigation }) => {
     const { login } = useAuth();
 
     const SignIn = (email,password) => {
-
-                if(email === "" || password === "") {
-                    setError("Please enter email and password.");
-                    return false;
+        if(email === "" || password === "") {
+            setError("Please enter email and password.");
+            return false;
+        } else {
+            setError("");
+            SignInUser(email, password, login,
+                () => {
+                    navigation.navigate('HomePage');
+                },
+                (errorMessage) => {
+                    setError(errorMessage);
                 }
-                else{
-                    setError("");
-                    SignInUser(email,password,navigation,login,
-                        () => {
-                            const isSetToke = updatePushToken({pushToken: pushToken});
+            );
+        }
+    }
 
-                            if(isSetToke){
-                                SecureStore.setItemAsync('pushToken', pushToken);
-                                console.log("Push Token set successfully",pushToken);
-                            }
-                            else{
-                                console.log("Push Token not set successfully",pushToken);
-                            }
-
-                            navigation.navigate('HomePage' );
-                        },
-                        (errorMessage) => {
-                            setError(errorMessage);
-                        }
-                    );
-                }
-            }
+    /*
+    Added PropTypes for SignInForm
+    */
+    SignInForm.propTypes = {
+      navigation: PropTypes.shape({
+        navigate: PropTypes.func.isRequired,
+      }).isRequired,
+      setShowSidePanel: PropTypes.func.isRequired,
+    };
 
     return (
          <Card style={styles.card}>
@@ -111,11 +106,11 @@ const styles = StyleSheet.create({
         padding: Math.round(width * 0.02 + height * 0.04) / 2,
         borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
         width: width * 0.9,
-        },
+    },
     container: {
         alignItems: "center",
     },
-     inputContainer: {
+    inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderBottomWidth: 1,
@@ -125,14 +120,6 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 18,
         padding: 8,
-    },
-    input: {
-        width: "100%",
-        marginBottom: height * 0.015,
-        padding: width * 0.015,
-        borderColor: "#ddd",
-        borderWidth: 2,
-        borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
     },
     buttonContainer: {
         width: "70%",
@@ -149,7 +136,12 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: 'blue',
         textAlign: 'center',
-        marginTop: height * 0.025,
+        marginTop: height * 0.020,
+    },
+    resetPassword: {
+        fontSize: 12,
+        color: 'blue',
+        textAlign: 'right',
     },
     input: {
         width: "100%",
@@ -167,7 +159,7 @@ const styles = StyleSheet.create({
         color: 'red',
         marginBottom: 16,
     },
-     icon: {
+    icon: {
         position: 'absolute',
         right: 10,
         height: 40,

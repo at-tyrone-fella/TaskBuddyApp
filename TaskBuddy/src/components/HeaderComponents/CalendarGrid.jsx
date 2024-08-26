@@ -1,31 +1,35 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { IconButton, Button } from 'react-native-paper';
 import moment from 'moment';
 import { FontPreferences } from '../../utility/FontPreferences';  
 import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { fetchTasks, getTaskHoursForDay } from '../../FireBaseInteractionQueries/manageTasks'; 
-import { setupUserProfileListener } from '../../FireBaseInteractionQueries/userProfile';
+import { fetchTasks, getTaskHoursForDay } from '../../FireBaseInteraction/manageTasks'; 
+import { setupUserProfileListener } from '../../FireBaseInteraction/userProfile';
+import { width, height } from '../../utility/DimensionsUtility';
+import PropTypes from 'prop-types';
 
-
-const CalendarGrid = ({ calendarState, setCalendarState, calendarColour, setCalendarColour, setShowTaskModal, setReturnDateTime }) => {
+const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setShowTaskModal, setReturnDateTime, setShowUpdateTaskModal, setUpdateTask }) => {
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
   const [tasks, setTasks] = useState([]);
   const [taskHours, setTaskHours] = useState([]);
   const [triggerPoint, setTriggerPoint] = useState(0);
+  const [helpVisible, setHelpVisible] = useState(false);
   const hourScrollViewRef = useRef(null);  
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
-
     const getTasksForDate = async (date) => {
       try {
         const tasksForDay = await fetchTasks(date);
+        console.log("ftd",tasksForDay)
         const tasksWithDisplayDetails = await Promise.all(tasksForDay.map(async (task) => {
           const taskDisplayDetails = await getTaskHoursForDay(task.repStartDateTime, task.repEndDateTime, date);
           return { ...task, ...taskDisplayDetails };
         }));
         setTasks(tasksWithDisplayDetails);
+        console.log("twdd", tasksWithDisplayDetails);
       } catch (error) {
         console.error("Error fetching tasks:", error);
       }
@@ -38,7 +42,7 @@ const CalendarGrid = ({ calendarState, setCalendarState, calendarColour, setCale
     const calcTaskHourProportions = async () => {
       const tasksPromise = await Promise.all(
         tasks.map(async (task) => {
-          const {taskID, proportions, directions} = await calculateHourlyProportions(task.repStartDateTime, task.repEndDateTime, task.taskID);
+          const { taskID, proportions, directions } = await calculateHourlyProportions(task.repStartDateTime, task.repEndDateTime, task.taskID);
           return { taskID, proportions, directions };
         })
       );
@@ -49,25 +53,24 @@ const CalendarGrid = ({ calendarState, setCalendarState, calendarColour, setCale
   }, [tasks]);
 
   useEffect(() => {
-
     const initializeListener = async () => {
-    return await setupUserProfileListener(setTriggerPoint)();
-  };
+      return await setupUserProfileListener(setTriggerPoint)();
+    };
 
-  let unsubscribe;  
+    let unsubscribe;  
 
-  initializeListener().then(unsub => {
-    unsubscribe = unsub;  
-  }).catch(error => {
-    console.error("Error initializing listener:", error);
-  });
+    initializeListener().then(unsub => {
+      unsubscribe = unsub;  
+    }).catch(error => {
+      console.error("Error initializing listener:", error);
+    });
 
-  return () => {
-    if (unsubscribe) {
-      unsubscribe();
-    }
-  };
-}, []);
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   const calculateHourlyProportions = async (startTimestamp, endTimestamp, taskID) => {
     const start = moment(startTimestamp);
@@ -133,6 +136,14 @@ const CalendarGrid = ({ calendarState, setCalendarState, calendarColour, setCale
     }
   };
 
+  const showHelp = () => {
+    setHelpVisible(true);
+  };
+
+  const hideHelp = () => {
+    setHelpVisible(false);
+  };
+
   useEffect(() => {
     if (!calendarState) {
       setCalendarColour('#D3D3D3');
@@ -154,7 +165,7 @@ const CalendarGrid = ({ calendarState, setCalendarState, calendarColour, setCale
     }, [selectedDate])
   );
 
-  const numDays = 15; // Number of days before and after today to show in the banner
+  const numDays = 15; 
   const dates = getDates(numDays);
 
   useEffect(() => {
@@ -204,27 +215,34 @@ const CalendarGrid = ({ calendarState, setCalendarState, calendarColour, setCale
     const fetchTaskName = (taskID) => {
       const task = tasks.find(task => task.taskID === taskID);
       return task ? task.taskName : '';
-    }
+    };
 
-    const handleLongPress = () => {
-      const dateTime = `${selectedDate} ${hour}:00:00`;
-      setReturnDateTime(dateTime);
-      setShowTaskModal(true);
+    const fetchTaskColour = (taskID) => {
+      const task = tasks.find(task => task.taskID === taskID);
+      return task ? task.color : '#32CD32';
+    };
+
+    const handleLongPress = (taskID) => {
+      setShowTaskModal(false);
+      setUpdateTask(tasks.find(task => task.taskID === taskID));
+      setShowUpdateTaskModal(true);
     };
 
     const numTasks = proportionsForHour.length;
 
     return (
-      <TouchableOpacity onLongPress={handleLongPress} delayLongPress={500}>
+      <TouchableOpacity onLongPress={() => setShowTaskModal(true)} delayLongPress={500}>
         <View style={styles.hourRow}>
           <Text style={styles.hourText}>{`${hour}:00`}</Text>
           <View style={styles.proportionContainer}>
             {proportionsForHour.map(({ taskID, proportion, directions }) => {
               const boxStyle = getBoxStyle(proportion, directions, numTasks);
+              const taskBackgroundColour = fetchTaskColour(taskID);
               return (
                 <TouchableOpacity
                   key={taskID}
-                  style={[styles.proportionBox, boxStyle]}
+                  style={[styles.proportionBox, { backgroundColor: taskBackgroundColour || 'green' }, boxStyle]}
+                  onLongPress={() => handleLongPress(taskID)} 
                 >
                   <Text style={styles.proportionText} numberOfLines={1} ellipsizeMode="tail">
                     {fetchTaskName(taskID)}
@@ -241,9 +259,48 @@ const CalendarGrid = ({ calendarState, setCalendarState, calendarColour, setCale
   return (
     <View style={styles.container}>
       {selectedDate && (
-        <View style={styles.selectedDateViewContainer}>
-          <Text style={styles.selectedDateText}>Date selected: {moment(selectedDate).format('LL')}</Text>
-        </View>        
+        <View style={styles.dateHeader}>
+          <View style={styles.selectedDateViewContainer}>
+            <Text style={styles.selectedDateText}>Date selected: {moment(selectedDate).format('LL')}</Text>
+          </View>
+          <IconButton
+            icon="help-circle-outline"
+            size={24}
+            mode="contained"
+            onPress={showHelp}
+            style={styles.helpButton}
+          />
+          <Modal
+            visible={helpVisible}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={hideHelp}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>How to use calendar ?</Text>
+                <Text style={styles.modalText}>
+                  1. Access task form with "+ Task" button in header or quickly access "Task form" by long pressing on hours.
+                </Text>
+                <Text style={styles.modalText}>
+                  2. Enter Task name, and select time and project.
+                </Text>
+                <Text style={styles.modalText}>
+                  3. Not entering End date will create the task indefinitely.
+                </Text>
+                <Text style={styles.modalText}>
+                  4. Not selecting project will allow you to create a personal task. (i.e Gym, hangout, etc.)
+                </Text>
+                <Text style={styles.modalText}>
+                  5. Record your expenses by entering expense amount, expense description, adding receipt. (Optional)
+                </Text>
+                <Text style={styles.modalText}>6. Use "Submit" button to create task.</Text>
+                <Text style={styles.modalText}>7. Long press on any task to view or edit details.</Text>
+                <Button mode="contained" onPress={hideHelp}>OK</Button>
+              </View>
+            </View>
+          </Modal>
+        </View>
       )}
       <ScrollView
         horizontal
@@ -280,11 +337,33 @@ const CalendarGrid = ({ calendarState, setCalendarState, calendarColour, setCale
   );
 };
 
+/**
+ * Prop type definition
+ */
+CalendarGrid.propTypes = {
+  calendarState: PropTypes.shape({
+    month: PropTypes.number.isRequired,
+    year: PropTypes.number.isRequired,
+  }).isRequired,
+  setCalendarState: PropTypes.func.isRequired,
+  setCalendarColour: PropTypes.func.isRequired,
+  setShowTaskModal: PropTypes.func.isRequired,
+  setReturnDateTime: PropTypes.func.isRequired,
+  setShowUpdateTaskModal: PropTypes.func.isRequired,
+  setUpdateTask: PropTypes.func.isRequired,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
     paddingHorizontal: 10,
+  },
+  dateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
   },
   dateBannerContainer: {
     alignItems: 'center',
@@ -330,7 +409,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   proportionBox: {
-    backgroundColor: '#32CD32',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -348,7 +426,6 @@ const styles = StyleSheet.create({
   selectedDateViewContainer: {
     backgroundColor: '#7dc7f6',
     borderRadius: 10,
-    marginVertical: 10,
     paddingVertical: 10,
     paddingHorizontal: 15,
     shadowColor: '#000',
@@ -356,7 +433,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 5,
-    alignSelf: 'center',
+  },
+  helpButton: {
+    position: 'absolute',
+    right: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: width * 0.8,
+    maxHeight: height * 0.7, 
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 

@@ -1,17 +1,32 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Modal, FlatList } from "react-native";
-import { Card, Button } from "react-native-paper";
+import { useFocusEffect } from '@react-navigation/native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  Alert,
+} from "react-native";
+
+import { Card, Button, IconButton } from "react-native-paper";
 import DropDownPicker from "react-native-dropdown-picker";
-import { Alert } from "react-native";
-import { getUserClientProfiles } from "../FireBaseInteractionQueries/userProfile";
-import { createOrganization } from "../FireBaseInteractionQueries/organization";
-import { getClientDetails } from "../FireBaseInteractionQueries/client";
+import { debounce } from "lodash";
+import PropTypes from "prop-types";
+import * as SecureStore from "expo-secure-store";
+import { width, height } from '../utility/DimensionsUtility'
+import { getUserClientProfiles } from "../FireBaseInteraction/userProfile";
+import { createOrganization } from "../FireBaseInteraction/organization";
+import { getClientDetails } from "../FireBaseInteraction/client";
 import CreateClient from "./CreateClient";
 import SignUpForm from "../components/SignUpForm";
-import { debounce } from "lodash";
-import { checkUserNames } from "../FireBaseInteractionQueries/userProfile";
-import { sendPayloadMessage } from "../FireBaseInteractionQueries/sendNotification";
-import * as SecureStore from 'expo-secure-store';
+import { checkUserNames } from "../FireBaseInteraction/userProfile";
+import { sendPayloadMessage } from "../FireBaseInteraction/sendNotification";
+import { updateOrganizationMember } from "../FireBaseInteraction/organization";
+import { addOrganizationToUser } from "../FireBaseInteraction/userProfile";
+import { FontPreferences } from "../utility/FontPreferences";
 
 const OrganizationForm = ({ navigation, setShowSidePanel }) => {
   const [orgName, setOrgName] = useState("");
@@ -36,29 +51,26 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
       if (username === "") {
         setBorderColour("#ddd");
         return;
-      } else {
-        setError("");
-        checkUserNames(username, (exists, userData) => {
-          if(userData.length > 1)
-          {
-            setError("Multiple users with the same username exist. Please enter a unique username.");
+      }
+      setError("");
+      checkUserNames(username, (exists, userData) => {
+        if (userData.length > 1) {
+          setError("Multiple users with the same username exist. Please enter a unique username.");
+          setBorderColour("red");
+          setButtonDisabled(true);
+          return;
+        } else {
+          if (exists) {
+            setBorderColour("green");
+            setButtonDisabled(false);
+            setFetchedUserData(userData[0]);
+          } else {
             setBorderColour("red");
             setButtonDisabled(true);
-            return;
+            setFetchedUserData(null);
           }
-          else{
-            if (exists) {
-              setBorderColour("green");
-              setButtonDisabled(false);
-              setFetchedUserData(userData[0]);
-            } else {
-              setBorderColour("red");
-              setButtonDisabled(true);
-              setFetchedUserData(null);
-            }
         }
       });
-      }
     }, 3000, { leading: true }),
     [username]
   );
@@ -74,22 +86,27 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
       setOrganisationClientList(tempOrgList);
 
       getClientDetails([clientCreationID], (clientData) => {
-        const clientList = clientData.map(client => ({
+        const clientList = clientData.map((client) => ({
           label: client.clientName,
           value: client.id,
         }));
 
-        setItems(prevItems => [...prevItems, clientList[0]]);
+        setItems((prevItems) => [...prevItems, clientList[0]]);
         setClientCreationID(null);
       });
     }
   }, [clientCreationID]);
+
+  const cleanupCreatedClients = () => {
+    console.log(clientCreationID);
+  }
 
   const handleCreateClient = () => {
     setShowCreateClientForm(true);
   };
 
   const addUser = () => {
+    
     if (fetchedUserData && !addUserList.some((user) => user.id === fetchedUserData.docId)) {
       setAddUserList([...addUserList, fetchedUserData]);
       setFetchedUserData(null);
@@ -102,56 +119,54 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
     setShowSignUpModal(true);
   };
 
-  const handleSubmit = async () => {
+  const addCreatorToOrganization = async (orgId, userId) => {
+    await updateOrganizationMember(orgId, userId);
+    await addOrganizationToUser(orgId, userId);
+  };
 
-    if (orgName === "" || orgDescription === "") {
+  const handleBack = () => {
+    setShowSidePanel(true);
+  }
+
+  const handleSubmit = async () => {
+    if (orgName === "") {
       setError("Please fill in all fields.");
       return;
-    } 
+    }
 
-    else
+    const memberList = addUserList.map((user) => user.docId);
+    const organizationSetupData = {
+      organizationName: orgName,
+      organizationDescription: orgDescription,
+      clients: value,
+      members: [],
+    };
 
-    {
+    const orgID = await createOrganization(organizationSetupData);
 
-      const memberList = addUserList.map(user => user.docId);
-
-      memberList.push(await SecureStore.getItemAsync('userID'));
-
-      const organizationSetupData = {
-        organizationName: orgName,
-        organizationDescription: orgDescription,
-        clients: value,
-        members: [],
-      };
-
-      const orgID = await createOrganization(organizationSetupData);
-
-      if(orgID)
-      {
-       
-        const resultSendMessage = await sendPayloadMessage(memberList,orgName, orgID);
-        console.log("Result of sending message:",resultSendMessage);
-        if(resultSendMessage.length === 0)
-        {
-          console.log("Message sent successfully");
-          navigation.navigate('HomePage');
-        }
-        else if(resultSendMessage.length > 0){
-          Alert.alert("Error","Invitation can't be sent to all members.Check if users have granted notification permission in app.");
-          console.log("Check logs for debugging. Failed invitation: ", resultSendMessage);
-        }
-        else{
-          Alert.alert("Error","Failed to send invitation to members.");
-          console.log("Failed to send invitation to members.");
-        }
-
+    if (orgID) {
+      await addCreatorToOrganization(orgID, await SecureStore.getItemAsync("userID"));
+      const resultSendMessage = await sendPayloadMessage(memberList, orgName, orgID);
+      if (resultSendMessage.length === 0) {
+        Alert.alert(
+          "Organization Created !!",
+          "Organization created successfully.",[{
+            title:'Ok'
+          }]
+        );
+        navigation.navigate("Organization");
+      } else {
+        Alert.alert(
+          "Error",
+          "Invitation can't be sent to all members."
+        );
       }
       setShowSidePanel(true);
     }
   };
 
   const handleRemove = (id) => {
-    setAddUserList(prevList => prevList.filter(user => user.docId !== id));
+    setAddUserList((prevList) => prevList.filter((user) => user.docId !== id));
   };
 
   const renderItem = ({ item }) => (
@@ -166,22 +181,53 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
   useEffect(() => {
     getUserClientProfiles((clients) => {
       getClientDetails(clients, (clientData) => {
-        const clientList = clientData.map(client => ({
+
+        let clientListActive = [];
+        clientData.map( (client) => {
+          if(client.isClientActive)
+          {
+            clientListActive.push(client);
+          }
+        }  
+        );
+
+        console.log("ClientList before pushing to list",clientListActive);
+        const clientList = clientListActive.map((client) => ({
+          
           label: client.clientName,
           value: client.id,
+        
         }));
         setItems(clientList);
       });
     });
   }, []);
 
+    const resetStates = useCallback(() => {
+    setShowSidePanel(true);
+  }, []);
+
+  useFocusEffect(
+  useCallback(() => {
+    return resetStates;
+  }, [setShowSidePanel, resetStates])
+);
+
+  OrganizationForm.propTypes = {
+    navigation: PropTypes.shape({
+      navigate: PropTypes.func.isRequired,
+    }).isRequired,
+    setShowSidePanel: PropTypes.func.isRequired,
+  };
+
   return (
     <Card style={styles.card}>
       <View style={styles.container}>
-        <Text style={styles.text}>Setup Organization</Text>
+        <Text style={{fontSize:FontPreferences.sizes.large, marginLeft: width * 0.15, marginBottom: height * 0.05}}>Create Organization</Text>
+        <Text style={styles.text}>Step 1: Setup Organization</Text>
         <TextInput
           style={styles.input}
-          placeholder="Organization Name"
+          placeholder="Organization Name *"
           value={orgName}
           onChangeText={setOrgName}
         />
@@ -191,12 +237,9 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
           value={orgDescription}
           onChangeText={setOrgDescription}
         />
+        <View style={styles.sectionSeparator} />
+        <Text style={styles.text}>Step 2: Add Clients</Text>
         <View style={styles.addClients}>
-          {open && (
-            <TouchableWithoutFeedback onPress={() => setOpen(false)}>
-              <View style={styles.overlay} />
-            </TouchableWithoutFeedback>
-          )}
           <DropDownPicker
             multiple={true}
             open={open}
@@ -206,11 +249,8 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
             setValue={setValue}
             setItems={setItems}
             placeholder="Select clients"
-            style={styles.dropDownPicker}
-            zIndex={3000}
-            zIndexInverse={1000}
           />
-          <Button mode="contained" onPress={handleCreateClient}>
+          <Button mode="contained" onPress={handleCreateClient} style={{marginTop:10}}>
             Create Client
           </Button>
           {showCreateClientForm && (
@@ -219,7 +259,7 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
                 <View style={styles.modalContent}>
                   <CreateClient
                     navigation={navigation}
-                    screenName='SetupOrganization'
+                    screenName="SetupOrganization"
                     setClientCreationID={setClientCreationID}
                     setShowCreateClientForm={setShowCreateClientForm}
                   />
@@ -228,8 +268,15 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
             </Modal>
           )}
         </View>
+        <View style={styles.sectionSeparator} />
+        <Text style={styles.text}>Step 3: Add Team Members</Text>
         <View style={styles.container}>
-          <Text style={styles.title}>Selected Team Members:</Text>
+          <View style={styles.teamHeader}>
+            <Text style={styles.title}>Select Team Members</Text>
+            <TouchableOpacity style={styles.infoButton} onPress={() => setShowInformation(true)}>
+              <IconButton icon="information-outline" size={20} color="blue" />
+            </TouchableOpacity>
+          </View>
           <FlatList
             data={addUserList}
             renderItem={renderItem}
@@ -252,195 +299,179 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
           <TouchableOpacity onPress={createNewUser}>
             <Text style={styles.linkText}>Create a new user.</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.infoButton} onPress={() => setShowInformation(true)}>
-            <Text style={styles.infoButtonText}>i</Text>
-          </TouchableOpacity>
         </View>
         {showInformation && (
           <Modal transparent={true} animationType="fade">
             <TouchableOpacity style={styles.tooltipBackground} onPress={() => setShowInformation(false)}>
-              <View style={styles.tooltip}>
+              <View style={styles.tooltipContainer}>
+                <Text style = {{fontSize: FontPreferences.sizes.medium,fontWeight:'bold',marginLeft:width * 0.15}}>How to add a member ?</Text>
                 <Text style={styles.tooltipText}>
-                  Add a user to your organization by entering their unique username. If the unique username is not yet created, it can be added by editing the User Profile. Click on the link to create a new user. Log in and create a unique username before proceeding with setting up the organization.
+                  Add existing users to your organization by their username, or create new users if needed.
+                  Note : New users need to login and add a username before they can be added.
+                </Text>
+                 <Text style={styles.tooltipText}>
+                  Note : New users need to login and add a username before they can be added.
                 </Text>
               </View>
             </TouchableOpacity>
           </Modal>
         )}
-        {showSignUpModal && (
-          <Modal transparent={true} animationType="fade">
-            <TouchableOpacity style={styles.modalBackground} onPress={() => setShowSignUpModal(false)}>
-              <TouchableWithoutFeedback>
-                <View style={styles.modalContent}>
-                  <SignUpForm navigation={navigation}/>
-                </View>
-              </TouchableWithoutFeedback>
-            </TouchableOpacity>
-          </Modal>
-        )}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        <View style={styles.buttonContainer}>
-          <Button mode="contained" onPress={handleSubmit} style={styles.button}>
-            Create Organization
-          </Button>
-          <Button mode="contained" onPress={() => setShowSidePanel(true)} style={styles.button}>
-            Back
-          </Button>
-        </View>
+        {error && <Text style={styles.error}>{error}</Text>}
+        <Button mode="contained" onPress={handleSubmit} style={styles.submitButton}>
+          Submit
+        </Button>
+        <Button mode="contained" onPress={handleBack} style={styles.submitButton}>
+          Back
+        </Button>
       </View>
+      {showSignUpModal && (
+        <Modal transparent={true} animationType="fade">
+          <TouchableOpacity style={styles.modalBackground} onPress={() => setShowSignUpModal(false)}>
+            <View style={styles.modalContent}>
+              <SignUpForm
+                navigation={navigation}
+                setShowSignUpModal={setShowSignUpModal}
+                OrganisationClientList={OrganisationClientList}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </Card>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    margin: 15,
-    padding: 15,
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
+    margin: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
   text: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
     marginBottom: 10,
+  },
+    flatListContainer: {
+    maxHeight: 200, 
   },
   input: {
+    height: 40,
+    borderColor: "#ddd",
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
     padding: 10,
-    marginBottom: 15,
+    marginBottom: 10,
   },
   addClients: {
-    marginBottom: 20,
+    marginBottom: 10,
+  },
+  sectionSeparator: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    marginVertical: 20,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+   dropDownContainer: {
+    maxHeight: 800,
   },
   dropDownPicker: {
-    width: '95%',
-    marginBottom: 10,
+    
   },
   modalBackground: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: 'transparent',
     padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    borderRadius: 10,
+    width: "80%",
   },
   itemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
   },
   selectedItem: {
     fontSize: 16,
   },
   removeButton: {
-    backgroundColor: 'red',
-    borderRadius: 5,
-    padding: 5,
+    paddingHorizontal: 10,
   },
   removeButtonText: {
-    color: 'white',
-    fontSize: 14,
-  },
-  addUser: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
+    color: "#FF0000",
   },
   userInput: {
+    height: 40,
+    borderColor: "#ddd",
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
     padding: 10,
     flex: 1,
+    marginRight: 10,
   },
-  addMemberButton: {
-    marginLeft: 10,
-  },
-  newUserLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  addUser: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
   },
+  addMemberButton: {
+    height: 40,
+  },
+  newUserLink: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+  },
   linkText: {
-    color: 'blue',
-    textDecorationLine: 'underline',
+    color: "#0000FF",
   },
   infoButton: {
-    backgroundColor: '#ccc',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginLeft: 5,
-  },
-  infoButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+    padding: 5,
   },
   tooltipBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  tooltip: {
-    width: '80%',
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
+  tooltipContainer: {
+    backgroundColor: "#ffff",
+    padding: 10,
+    width : width * 0.80,
+    height : height * 0.25,
+    margin: 10,
+    borderRadius: 5,
   },
   tooltipText: {
-    fontSize: 12,
-    textAlign: 'center',
+    fontSize: 16,
+    color: "#000",
+  },
+  submitButton: {
+    marginTop: 20,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 20,
+    color: "#aaa",
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  button: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 14,
-    textAlign: 'center',
+  error: {
+    color: "#FF0000",
     marginTop: 10,
+  },
+  title: {
+    fontWeight: "bold",
+  },
+  teamHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  backButton: {
+    marginLeft: 0,
   },
 });
 

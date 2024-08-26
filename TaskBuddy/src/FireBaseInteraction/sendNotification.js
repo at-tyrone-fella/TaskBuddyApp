@@ -1,33 +1,21 @@
-import { getPushToken } from "./userProfile";
 import { createNewInvitation } from "./manageInvitation";
 import { STATUS_VALUES } from "./manageInvitation";
 
-const getPushTokenAsync = (member) => {
-    return new Promise((resolve, reject) => {
-        getPushToken(member, (pushToken) => {
-            if (pushToken) {
-                resolve(pushToken);
-            } else {
-                reject(new Error('Push token not found'));
-            }
-        });
-    });
-};
 
+/**
+ * This method sends payload message to create anew invitation to the invitations collections.
+ * It returns a list of failed invitations that were not created for some users.
+ * @param {*} memberList - Member list to send invitation.
+ * @param {*} orgName - Organization Name for invitation.
+ * @param {*} organizationId - Organization Id for invitation.
+ * @returns 
+ */
 export const sendPayloadMessage = async (memberList, orgName, organizationId) => {
     const failedInvitations = [];
-
+    
     try {
         for (const member of memberList) {
             try {
-                const pushToken = true; 
-                
-                if (!pushToken) {
-                    console.warn(`Push token not found for member ${member}`);
-                    failedInvitations.push(member);
-                    continue; 
-                }
-
                 const payload = {
                     notification: {
                         title: 'Organization Invitation',

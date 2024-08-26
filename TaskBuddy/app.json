@@ -12,7 +12,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.abhishektyronefella.TaskBuddy"
     },
     "android": {
       "googleServicesFile": "./google-services.json",
@@ -27,12 +28,18 @@
       "package": "com.abhishektyronefella.TaskBuddy"
     },
     "web": {
-            "authSessionRedirectScheme": "https"
+      "authSessionRedirectScheme": "https"
     },
     "extra": {
       "eas": {
         "projectId": "07710858-c47a-4439-bbf6-a1c9ac2523ab"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/07710858-c47a-4439-bbf6-a1c9ac2523ab"
     }
   }
 }

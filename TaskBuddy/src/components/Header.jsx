@@ -5,6 +5,7 @@ import UserProfile from './HeaderComponents/UserProfile';
 import CreateTask from './HeaderComponents/CreateTask';
 import { width, height } from '../utility/DimensionsUtility';
 import { Button } from 'react-native-paper';
+import PropTypes from 'prop-types';
 
 const Header = ({ navigation, screenName, calendarState, setCalendarState, calendarColour, setCalendarColour, setShowTaskModal }) => {
 
@@ -17,6 +18,25 @@ const Header = ({ navigation, screenName, calendarState, setCalendarState, calen
       setCalendarColour('#ffc300');
     }
   }, [calendarState]);
+
+  /*
+  Added prop types for Header
+  */
+  Header.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    goBack: PropTypes.func,
+  }).isRequired,
+  screenName: PropTypes.string.isRequired,
+  calendarState: PropTypes.shape({
+    month: PropTypes.number.isRequired,
+    year: PropTypes.number.isRequired,
+  }).isRequired,
+  setCalendarState: PropTypes.func.isRequired,
+  calendarColour: PropTypes.string.isRequired,
+  setCalendarColour: PropTypes.func.isRequired,
+  setShowTaskModal: PropTypes.func.isRequired,
+};
 
   return (
     <SafeAreaView style={styles.container}>

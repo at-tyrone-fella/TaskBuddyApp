@@ -3,9 +3,24 @@ import { View, SafeAreaView, StyleSheet, TouchableWithoutFeedback } from "react-
 import LandingHeader from "../components/LandingHeader.jsx";
 import SignUpForm from "../components/SignUpForm.jsx";
 import { Banner } from "react-native-paper";
+import PropTypes from 'prop-types';
+
 
 const SignUpScreen = ({navigation}) => {
+
+  
+
   const [visible, setVisible] = useState(true);
+
+  /**
+   * Added PropTypes for navigation
+   */
+  SignUpScreen.propTypes = {
+    navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    }).isRequired,
+  };
+  
 
   return (
     <SafeAreaView style={styles.container}>

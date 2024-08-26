@@ -1,0 +1,6 @@
+appId: com.abhishektyronefella.TaskBuddy # This is an example app id. Replace it with your app id.
+---
+- launchApp
+- tapOn: "Sign.*"
+- tapOn: "Log.*"
+- assertVisible: "Sign.*"

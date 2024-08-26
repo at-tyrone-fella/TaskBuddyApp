@@ -2,12 +2,14 @@ import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Modal, FlatList } from "react-native";
 import { Card, Button } from "react-native-paper";
 import DropDownPicker from "react-native-dropdown-picker";
-import { getUserClientProfiles } from "../FireBaseInteractionQueries/userProfile";
-import { updateOrganization } from "../FireBaseInteractionQueries/organization";
-import { getClientDetails } from "../FireBaseInteractionQueries/client";
+import { getUserClientProfiles } from "../FireBaseInteraction/userProfile";
+import { updateOrganization } from "../FireBaseInteraction/organization";
+import { getClientDetails } from "../FireBaseInteraction/client";
 import CreateClient from "./CreateClient";
-import { checkUserNames } from "../FireBaseInteractionQueries/userProfile";
-import { getUserMemberDetails } from "../FireBaseInteractionQueries/userProfile";
+import SignUpForm from "../components/SignUpForm";
+import { checkUserNames } from "../FireBaseInteraction/userProfile";
+import { getUserMemberDetails } from "../FireBaseInteraction/userProfile";
+import PropTypes from 'prop-types';
 import { debounce } from "lodash";
 
 const OrganizationDetails = ({ navigation, organizationData, setShowDetails, setShowSidePanel, setisdataPassed }) => {
@@ -19,8 +21,9 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
   const [showCreateClientForm, setShowCreateClientForm] = useState(false);
   const [selectedClients, setSelectedClients] = useState(organizationData.clients || []);
   const [clients, setClients] = useState(organizationData.clients || []);
-  const [username, setUsername] = useState("");
   const [newClientList, setNewClientList] = useState([]);
+  
+  const [username, setUsername] = useState("");
   const [showSignUpModal, setShowSignUpModal] = useState(false);  
   const [showInformation, setShowInformation] = useState(false);
   const [buttonDisabled, setButtonDisabled] = useState(true);
@@ -31,7 +34,6 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
   const [items, setItems] = useState([]);
   const [clientCreationID, setClientCreationID] = useState();
   const [error, setError] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -68,7 +70,7 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
   };
 
   const handleSubmit = () => {
-    if (orgName === "" || orgDescription === "") {
+    if (orgName === "") {
       setError("Please fill in all fields.");
       return;
     } else {
@@ -78,7 +80,6 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
         clients: selectedClients,
         members: addUserDetailsList.map(user => user.userId),
       };
-      setIsSubmitted(true);
       updateOrganization(organizationData.id, organizationUpdateData).then(() => {
         setShowDetails(false);
         setShowSidePanel(true);
@@ -125,27 +126,26 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
       if (username === "") {
         setBorderColour("#ddd");
         return;
-      } else {
-        setError("");
-        checkUserNames(username, (exists, userData) => {
-          if(userData.length > 1) {
-            setError("Multiple users with the same username exist. Please enter a unique username.");
+      }
+      setError("");
+      checkUserNames(username, (exists, userData) => {
+        if (userData.length > 1) {
+          setError("Multiple users with the same username exist. Please enter a unique username.");
+          setBorderColour("red");
+          setButtonDisabled(true);
+          return;
+        } else {
+          if (exists) {
+            setBorderColour("green");
+            setButtonDisabled(false);
+            setFetchedUserData(userData[0]);
+          } else {
             setBorderColour("red");
             setButtonDisabled(true);
-            return;
-          } else {
-            if (exists) {
-              setBorderColour("green");
-              setButtonDisabled(false);
-              setFetchedUserData(userData[0]);
-            } else {
-              setBorderColour("red");
-              setButtonDisabled(true);
-              setFetchedUserData(null);
-            }
+            setFetchedUserData(null);
           }
-        });
-      }
+        }
+      });
     }, 3000, { leading: true }),
     [username]
   );
@@ -156,14 +156,16 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
 
   const addUser = () => {
     if (fetchedUserData && !addUserList.some((user) => user.id === fetchedUserData.docId)) {
-      setAddUserList([...addUserList, fetchedUserData]);
+      setAddUserList([...addUserList, fetchedUserData.docId]);
       setFetchedUserData(null);
+      console.log("AddUSerList",addUserList);
     } else {
       setError("User record not found or user already added");
     }
   };
 
   const renderItem = ({ item }) => (
+     
     <View style={styles.itemContainer}>
       <Text style={styles.selectedItem}>{item.username}</Text>
       <TouchableOpacity style={styles.removeButton} onPress={() => handleRemove(item.userId)}>
@@ -172,11 +174,30 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
     </View>
   );
 
+  /*
+  Added PropTypes for OrganizationDetails
+  */
+  OrganizationDetails.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+  }).isRequired,
+  organizationData: PropTypes.shape({
+    organizationName: PropTypes.string.isRequired,
+    organizationDescription: PropTypes.string.isRequired,
+    clients: PropTypes.arrayOf(PropTypes.string).isRequired,
+    members: PropTypes.arrayOf(PropTypes.string).isRequired,
+    id: PropTypes.string.isRequired,
+  }).isRequired,
+  setShowDetails: PropTypes.func.isRequired,
+  setShowSidePanel: PropTypes.func.isRequired,
+  setisdataPassed: PropTypes.func.isRequired,
+};
+
   return (
     <Card style={styles.card}>
       <View style={styles.container}>
         <Text style={styles.text}>Edit Organization</Text>
-        <Text style={styles.inputLabel}>Organization Name</Text>
+        <Text style={styles.inputLabel}>Organization Name *</Text>
         <TextInput
           style={styles.input}
           placeholder="Organization Name"
@@ -333,6 +354,12 @@ const styles = StyleSheet.create({
   dropDownPicker: {
     width: '95%',
     marginBottom: 10,
+  },
+    itemContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
   },
   modalBackground: {
     flex: 1,

@@ -26,12 +26,10 @@ export const updateUserProfile = async (userProfileData, member) => {
         await updateDoc(userDocRef, {
           organizations: arrayUnion(orgID)
         });
-        console.log(`User ${uid} updated with organization ${orgID}`);
       } else {
         await updateDoc(userDocRef, {
           organizations: [orgID]
         });
-        console.log(`User ${uid} created with organization ${orgID}`);
       }
     } else {
       throw new Error("User document does not exist");
@@ -65,12 +63,10 @@ export const updateUserProjectProfile = async (projectId, member) => {
         await updateDoc(userDocRef, {
           projects: arrayUnion(projectId)
         });
-        console.log(`User ${uid} updated with project ${projectId}`);
       } else {
         await updateDoc(userDocRef, {
           projects: [projectId]
         });
-        console.log(`User ${uid} created with project ${orgID}`);
       }
     } else {
       throw new Error("User document does not exist");
@@ -98,13 +94,13 @@ export const fetchOrgCreatorDetails = async (callback) => {
     });
 };
 
-export const updatedUserClientProfileInvitation = async (invitationData, uid) => {
+export const updatedUserClientProfileInvitation = async (invitationId, uid) => {
 
   try {
       const docRef = doc(db, "users", uid);
 
       await updateDoc(docRef, {
-        invitations : invitationData.invitations,
+        invitations: arrayUnion(invitationId),
       });
     
       return true;
@@ -172,7 +168,6 @@ export const addOrganizationToUser = async (organizationID, userId) => {
       organizations: arrayUnion(organizationID)
     });
 
-    console.log("Org added to the organizations array in users with ID: ", userId);
     return true;
   } catch (e) {
     console.error("Error updating document: ", e);
@@ -278,14 +273,17 @@ export const checkUserNames = async (username, callback) => {
 export const checkUniqueUserName = async (username, callback) => {
 
   const querySnapshot = await getDocs(collection(db, "users"));
+  let searchResult = false;
   querySnapshot.forEach((doc) => {
     if (doc.data().username === username) {
       callback(true,{docId: doc.id, username : doc.data().username});
-    } else {
-      callback(false);
+      searchResult=true;
     }
   });
-
+  if(!searchResult)
+  {
+    callback(searchResult);
+  }
 };
 
 export const getUserClientProfiles = async (callback) => {
@@ -309,10 +307,12 @@ export const getUserClientProfiles = async (callback) => {
 
 export const getUserMemberDetails = async (userList) => {
   let userDetailsList = [];
-
   try {
-    const userDetailsPromises = userList.map(async (userId) => {
-      const userDocRef = doc(db, "users", userId);
+    const userDetailsPromises = userList.map(async (user) => {
+
+
+
+      const userDocRef = doc(db, "users", user);
       const userDocSnap = await getDoc(userDocRef);
 
       if (userDocSnap.exists()) {
@@ -324,7 +324,6 @@ export const getUserMemberDetails = async (userList) => {
     });
 
     const userDetails = await Promise.all(userDetailsPromises);
-
     userDetailsList = userDetails.filter(userDetail => userDetail !== null);
     return userDetailsList;
   } catch (e) {
@@ -333,7 +332,8 @@ export const getUserMemberDetails = async (userList) => {
   }
 };
 
-export const deleteInvitationFromUser = async (invitationId, userId) => {
+export const deleteInvitationFromUser = async (invitationId, userId,setLockRefresh) => {
+  setLockRefresh(true);
   try {
     const userDocRef = doc(db, "users", userId);
     const userDocSnap = await getDoc(userDocRef);
@@ -347,14 +347,16 @@ export const deleteInvitationFromUser = async (invitationId, userId) => {
         invitations: updatedInvitations
       });
 
-      console.log("Invitation deleted from user with ID: ", userId);
+      setLockRefresh(false);
       return true;
     } else {
       console.log("No such user document!");
+      setLockRefresh(false);
       return false;
     }
   } catch (e) {
     console.error("Error updating document: ", e);
+    setLockRefresh(false);
     return false;
   }
 };
@@ -367,10 +369,9 @@ export const setupUserProfileListener = (setTriggerPoint) => {
 
       const userProfileRef = doc(db, 'users', uid);
 
-      const unsubscribe = onSnapshot(userProfileRef, (docSnapshot) => {
+      const unsubscribe = onSnapshot(userProfileRef, () => {
 
         setTriggerPoint((prevTriggerPoint) => {
-          console.log("Previous Trigger Point:", prevTriggerPoint);
           return prevTriggerPoint + 1;
         });
       }, (error) => {

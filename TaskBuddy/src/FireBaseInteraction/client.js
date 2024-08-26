@@ -14,7 +14,6 @@ export const createClientUser = async (clientData) => {
   try {
     const collRef = collection(db, "clients");
     const docRef = await addDoc(collRef, clientData);
-    console.log("Document written with ID: ", docRef.id);
 
     console.log("Adding client to user profile");
     updateUserClientProfile({ clients: arrayUnion(docRef.id) });
@@ -44,49 +43,60 @@ export const createClientOrganization = async (clientData,callback) => {
 };
 
 
-export const getClientDetails = async (clientID,updateCallback) => {
-
-return new Promise((resolve, reject) => {  
+export const getClientDetails = async (clientID, updateCallback) => {
+  return new Promise((resolve, reject) => {
     let returnArray = [];
     let remaining = clientID.length;
+    const unsubscribeList = [];
+
     if (remaining === 0) {
       resolve(returnArray);
-      console.log("No clients to fetch");
       return;
     }
 
     clientID.forEach((client) => {
       const clientDocRef = doc(db, "clients", client);
 
-      const unsubscribe = onSnapshot(clientDocRef, (docSnapshot) => {
-        if (docSnapshot.exists()) {
-          let clientData = docSnapshot.data();
-          clientData = { ...clientData, id: docSnapshot.id };
+      const unsubscribe = onSnapshot(
+        clientDocRef,
+        (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            let clientData = docSnapshot.data();
+            clientData = { ...clientData, id: docSnapshot.id };
 
-          const index = returnArray.findIndex(org => org.id === client);
-          if (index >= 0) {
-            returnArray[index] = clientData;
+            const index = returnArray.findIndex((org) => org.id === client);
+            if (index >= 0) {
+              returnArray[index] = clientData;
+            } else {
+              returnArray.push(clientData);
+            }
+
+            if (updateCallback) {
+              updateCallback([...returnArray]);
+            }
           } else {
-            returnArray.push(clientData);
+            console.log("No such document!");
           }
 
-          if (updateCallback) {
-            updateCallback([...returnArray]);
+          remaining -= 1;
+          if (remaining === 0) {
+            resolve(returnArray);
           }
-        } else {
-          console.log("No such document!");
+        },
+        (error) => {
+          reject(error);
         }
+      );
 
-        remaining -= 1;
-        if (remaining === 0) {
-          resolve(returnArray); 
-        }
-      }, (error) => {
-        reject(error);
-      });
+      unsubscribeList.push(unsubscribe);
     });
+
+    return () => {
+      unsubscribeList.forEach((unsubscribe) => unsubscribe());
+    };
   });
 };
+
 
 export const deleteRedundantClients = (clientData) => {
 
@@ -108,8 +118,10 @@ export const fetchUserClients = async (callback) => {
   const uid = await SecureStore.getItemAsync('userID');
   if (!uid) throw new Error("No user ID found in SecureStore");
 
+
   onSnapshot(doc(db, "users", uid), (doc) => {
     if(doc.exists()) {
+      console.log("FetchClient",doc.data().clients);
       callback(doc.data().clients);
     } else {
       callback([]);
@@ -119,11 +131,15 @@ export const fetchUserClients = async (callback) => {
 
 };
 
-export const getUserClientProfiles = async (clientList,callback) => {
+export const getUserClientProfileDetails = async (clientList,callback) => {
+
+
 
   let returnArray = [];
 
   let remaining = clientList.length;
+
+  const unsubscribeFunctions = [];
 
   if (remaining === 0) {
     callback([]);
@@ -150,12 +166,62 @@ export const getUserClientProfiles = async (clientList,callback) => {
         callback(returnArray); 
       }
     });
+    
+    unsubscribeFunctions.push(unsubscribe);
+
   });
+
+  return () => {
+    unsubscribeFunctions.forEach(unsub => unsub());
+  };
 
 };
 
+export const getUserClientProfiles = async (clientList,callback) => {
+  let returnArray = [];
+  let unsubscribeFunctions = [];
+
+  if (clientList.length === 0) {
+    callback([]); 
+    return;
+  }
+
+  clientList.forEach((client, index) => {
+    const clientDocRef = doc(db, "clients", client);
+
+    const unsubscribe = onSnapshot(clientDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        let clientData = docSnapshot.data();
+       
+            clientData = { ...clientData, id: docSnapshot.id };
+        
+
+        const existingIndex = returnArray.findIndex(item => item.id === clientData.id);
+        if (existingIndex >= 0) {
+          returnArray[existingIndex] = clientData;
+        } else {
+          returnArray.push(clientData);
+        }
+
+        
+        if (index === clientList.length - 1) {
+          callback([...returnArray]);  
+        }
+      } else {
+        console.log("No such document!");
+      }
+    });
+
+    unsubscribeFunctions.push(unsubscribe);
+  });
+
+  return () => {
+    unsubscribeFunctions.forEach(unsub => unsub());
+  };
+};
+
+
 export const updateClientDetails = async (clientID, clientData) => {
-  
     try {
       const docRef = doc(db, "clients", clientID);
       await setDoc(docRef, clientData, { merge: true });

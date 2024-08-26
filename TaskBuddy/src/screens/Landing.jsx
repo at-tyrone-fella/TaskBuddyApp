@@ -5,6 +5,7 @@ import LandingHeader from "../components/LandingHeader.jsx";
 import SignInForm from "../components/SignInForm.jsx";
 import { width, height } from "../utility/DimensionsUtility.js";
 import { FontPreferences } from "../utility/FontPreferences.js";
+import PropTypes from 'prop-types';
 
 const Landing = ({ navigation }) => {
 
@@ -13,6 +14,17 @@ const Landing = ({ navigation }) => {
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
   };
+
+  /**
+   * Added PropTypes for navigation
+   */
+  Landing.propTypes = {
+    navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    }).isRequired,
+  };
+  
+
 
   return (
     <SafeAreaView>
@@ -81,7 +93,6 @@ const styles = StyleSheet.create({
   },
   card: {
     marginHorizontal: width * 0.05,
-    marginVertical: height * 0.025,
     marginVertical: height * 0.025,
     padding: width * 0.05,
   },

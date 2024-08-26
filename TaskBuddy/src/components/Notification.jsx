@@ -1,30 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
-import { width, height } from '../utility/DimensionsUtility';
+import { width } from '../utility/DimensionsUtility';
 import * as SecureStore from 'expo-secure-store';
-import { updateOrganizationMember } from '../FireBaseInteractionQueries/organization';
-import { addOrganizationToUser } from '../FireBaseInteractionQueries/userProfile';
-import { updateInvitationStatus } from '../FireBaseInteractionQueries/manageInvitation';
-import { deleteInvitationFromUser } from '../FireBaseInteractionQueries/userProfile';
-import { STATUS_VALUES } from '../FireBaseInteractionQueries/manageInvitation';
+import { updateOrganizationMember } from '../FireBaseInteraction/organization';
+import { addOrganizationToUser, deleteInvitationFromUser } from '../FireBaseInteraction/userProfile';
+import { updateInvitationStatus, STATUS_VALUES, refreshNotificationList } from '../FireBaseInteraction/manageInvitation';
 
-const Notification = ({ navigation }) => {
+/**
+ * This component loads and manages notifications.
+ * Bug 1.1 : Identified a bug with re- rendering of the Notification List upon acceptance.
+ * This bug becomes particularly irritating for user interface if its the last notification that is accepted.
+ * It works fine with deny. This will be fixed in future releases.
+ */
+const Notification = () => {
   const [invitations, setInvitations] = useState([]);
   const [uid, setUid] = useState(null);
+  const [lockRefresh, setLockRefresh] = useState(false);
+  const isUpdating = useRef(false);
 
+  // Fetch the UID once on component mount
   useEffect(() => {
-    const fetchUserId = async () => {
-      const storedUserId = await SecureStore.getItemAsync('userID');
-      setUid(storedUserId);
+    const fetchUid = async () => {
+      const userId = await SecureStore.getItemAsync("userID");
+      setUid(userId);
     };
-
-    fetchUserId();
+    fetchUid();
   }, []);
 
   useEffect(() => {
-    if (!uid) return; 
+    if (!uid || isUpdating.current) return; // Dont reload if an update is in progress
 
     const userDocRef = doc(db, "users", uid);
 
@@ -38,19 +44,15 @@ const Notification = ({ navigation }) => {
             const inv = await getDoc(invitationDocRef);
 
             if (inv.exists()) {
-              console.log("Invitation Data: ", inv.data());
               return { id: invitationId, ...inv.data() };
             } else {
-              console.log("No such invitation document!");
               return { id: invitationId, error: "No such document" };
             }
           })
         );
 
-        console.log("Fetched Invitations: ", fetchedInvitations);
         setInvitations(fetchedInvitations);
       } else {
-        console.log("No such user document!");
         setInvitations([]);
       }
     });
@@ -58,38 +60,77 @@ const Notification = ({ navigation }) => {
     return () => unsubscribe();
   }, [uid]);
 
-  const handleAccept = async (invitationId) => {
+const handleAccept = async (invitationId) => {
+  isUpdating.current = true;
+  try {
+    console.log("Invitation ID: ", invitationId);
 
     const invitationClicked = invitations.find((invitation) => invitation.id === invitationId);
 
-    const addMemberToOrganization = await updateOrganizationMember(invitationClicked.data.orgId, invitationClicked.data.userId);
+    if (!invitationClicked) {
+      throw new Error("Invitation not found");
+    }
 
-    const addOrganizationToUserProfile = addOrganizationToUser(invitationClicked.data.orgId, invitationClicked.data.userId);
+    const result1 = await updateOrganizationMember(invitationClicked.data.orgId, invitationClicked.data.userId);
+    const result2 = await addOrganizationToUser(invitationClicked.data.orgId, invitationClicked.data.userId);
+    const result3 = await updateInvitationStatus(invitationId, STATUS_VALUES.ACCEPTED);
+    const result4 = await deleteInvitationFromUser(invitationId, invitationClicked.data.userId, setLockRefresh);
 
-    const updateInvitation = await updateInvitationStatus(invitationId, STATUS_VALUES.ACCEPTED);
+    console.log(result1,result2,result3,result4);
 
-    const updateInvitationList =  await deleteInvitationFromUser(invitationId, invitationClicked.data.userId);
+    if(result1 && result2 && result3 && result4)
+    {
+      Alert.alert("Accepted !!","You have accepted invitation.",
+        [
+          { text:"OK" }
+        ]
+      );
+    } else {
+      Alert.alert("Rejected !!","You have denied invitation.",
+              [
+                { text:"OK" }
+              ]
+            );
+    }
+   
+    if(!lockRefresh)
+    {
+    const newInvitationList = await refreshNotificationList(uid);
+    setInvitations(newInvitationList);
+    }
+  } catch (error) {
+    console.error("Error handling accept:", error);
+  } finally {
+    isUpdating.current = false;
+  }
+};
 
-
-  };
 
   const handleDeny = async (invitationId) => {
+    isUpdating.current = true;
+    try {
+      const invitationClicked = invitations.find((invitation) => invitation.id === invitationId);
 
-    const invitationClicked = invitations.find((invitation) => invitation.id === invitationId);
+      await Promise.all([
+        updateInvitationStatus(invitationId, STATUS_VALUES.DENIED),
+        deleteInvitationFromUser(invitationId, invitationClicked.data.userId, setLockRefresh),
+      ]);
 
-    const updateInvitation = await updateInvitationStatus(invitationId, STATUS_VALUES.DENIED);
-
-    const updateInvitationList =  await deleteInvitationFromUser(invitationId, invitationClicked.data.userId);
-
-    
+      const newInvitationList = await refreshNotificationList(uid);
+      setInvitations(newInvitationList);
+    } catch (error) {
+      console.error("Error handling deny:", error);
+    } finally {
+      isUpdating.current = false;
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Pending Invitations: </Text>
+      <Text style={styles.text}>Pending Invitations:</Text>
       {invitations.length > 0 ? (
-        invitations.map((invitation, index) => (
-          <View key={invitation.id || index} style={styles.card}>
+        invitations.map((invitation) => (
+          <View key={invitation.id} style={styles.card}>
             <Text style={styles.title}>{invitation.notification?.title || "No Title"}</Text>
             <Text style={styles.body}>{invitation.notification?.body || "No Body"}</Text>
             <View style={styles.buttonContainer}>
@@ -130,7 +171,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 3, 
+    elevation: 3,
     width: width * 0.9,
   },
   title: {

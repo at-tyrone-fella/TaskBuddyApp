@@ -1,9 +1,11 @@
 import '../../firebaseConfig';
-import { doc, addDoc, updateDoc, onSnapshot, collection, arrayUnion, getDoc, setDoc, or } from 'firebase/firestore';
+import { doc, addDoc, updateDoc, onSnapshot, collection, arrayUnion, getDoc, setDoc } from 'firebase/firestore';
 import * as SecureStore from 'expo-secure-store';
 import { db } from '../../firebaseConfig';
 import { updateOrganization } from './organization';
 import { updateUserProjectProfile } from './userProfile';
+
+const DEFAULT_PROJECT_NAME = "%_Personal_Project_%";
 
 export const updateProject = async ( projectId , payLoad, callback) => {
   try{
@@ -13,6 +15,38 @@ export const updateProject = async ( projectId , payLoad, callback) => {
   } catch (e) {
     console.error("Error updating document: ", e);
     callback(false);
+  }
+};
+
+export const getDefaultProjectId = async () => {
+  try {
+    const uid = await SecureStore.getItemAsync('userID');
+    if (!uid) throw new Error("No user ID found in SecureStore");
+
+    let returnId;
+
+    const userDocRef = doc(db, "users", uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      const projectList = userDocSnap.data().projects;
+      for (const project of projectList) {
+
+        const projectRef = doc(db, "projects", project);
+        const projectDoc = await getDoc(projectRef);
+        if (projectDoc.exists() && projectDoc.data().projectName === DEFAULT_PROJECT_NAME) {
+          console.log(projectDoc.id);
+          returnId = projectDoc.id;
+        }
+      }
+      return returnId;
+    } else {
+      console.log("No data found for this user when fetching project data!");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error fetching projects from user:", error);
+    return false;
   }
 };
 
@@ -46,7 +80,7 @@ export const getProjectsFromUsers = async (callback) => {
 
         const projectRef = doc(db, "projects", project);
         const projectDoc = await getDoc(projectRef);
-        if (projectDoc.exists()) {
+        if (projectDoc.exists() && projectDoc.data().projectName !== DEFAULT_PROJECT_NAME) {
 
           returnProjectData.push({ project, ...projectDoc.data()});
           
@@ -87,7 +121,6 @@ export const getOrganizations = async (callback) => {
 
           const orgData = await Promise.all(orgPromises);
           const filteredOrgData = orgData.filter(org => org !== null);
-          console.log(filteredOrgData);
           callback(filteredOrgData);
         } else {
           callback([]);
@@ -132,7 +165,6 @@ export const getOrganizationMembers = async (organizationId, callback) => {
     
             const memberData = await Promise.all(memberPromises);
             const filteredMemberData = memberData.filter(member => member !== null);
-            console.log(filteredMemberData);
             callback(filteredMemberData);
         } else {
             callback([]);
@@ -174,7 +206,6 @@ export const getClients = async (organizationId, callback) => {
 
         const clientData = await Promise.all(clientPromises);
         const filteredClientData = clientData.filter(client => client !== null);
-        console.log(filteredClientData);
         callback(filteredClientData);
       } else {
         callback([]);
@@ -201,7 +232,6 @@ export const createProject = async (payLoad) => {
             await updateUserProjectProfile(docRef.id, member);
         });
 
-        console.log("Project created with ID: ", projectRef.id);
         return true;
     }  catch (e) {
     console.error("Error adding document: ", e);
@@ -219,7 +249,6 @@ export const createPersonalProject = async (payLoad,uniqueId) => {
   }
   else{
     uid = uniqueId;
-    console.log("Unique ID: ",uid);
   }
   try{
       const projectRef = collection(db, "projects");

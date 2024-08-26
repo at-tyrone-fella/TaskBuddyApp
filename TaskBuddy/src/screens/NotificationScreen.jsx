@@ -1,10 +1,22 @@
 import React from "react";
 import { View, SafeAreaView, StyleSheet } from "react-native";
 import Header from "../components/Header.jsx";
-import { height, width } from "../utility/DimensionsUtility.js";
+import { height } from "../utility/DimensionsUtility.js";
 import Notification from '../components/Notification.jsx';
+import PropTypes from 'prop-types';
+
 
 const NotificationScreen = ({ navigation }) => {
+
+  /**
+   * Added PropTypes for navigation
+   */
+  NotificationScreen.propTypes = {
+    navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    }).isRequired,
+  };
+  
 
   return (
     <SafeAreaView style={styles.container}>

@@ -1,14 +1,21 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { auth } from '../../firebaseConfig.js';
+import PropTypes from 'prop-types';
 
 const AuthenticationContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [userID, setUserID] = useState(null);
 
+
+  /**
+   * This method checks for refreshToken and signsIn if the refresh token is found.
+   * If refresh token is not available, it will clear expo-secure-store fields and intiates logout procedure.
+   * This useEffect() will allow checkToken method to be called only once upon component mount.
+   */
   useEffect(() => {
   const checkToken = async () => {
     try {
@@ -25,22 +32,28 @@ export const AuthProvider = ({ children }) => {
           console.error(e);
           setIsAuthenticated(false);
           setUserID(null);
+          logout();
         }
       } else {
         setIsAuthenticated(false);
         setUserID(null);
+        logout();
       }
-      setLoading(false);
     } catch (e) {
       console.error(e);
-      setLoading(false);
     }
   };
 
   checkToken();
 }, []);
 
-  const login = async (user) => {
+
+/**
+ * This method sets expo secure store fields such as userToken, refreshToken and userID. 
+ * Managing them at secure store allows secure and instant access to these fields without passing them around in the applicaiton.
+ * @param  user 
+ */
+const login = async (user) => {
     try {
       await SecureStore.setItemAsync('userToken', user.token);
       await SecureStore.setItemAsync('refreshToken', user.refreshToken);
@@ -52,8 +65,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
-  const logout = async () => {
+/**
+ * This method will delete user credentials from secure store and will setIsAuthenticated to false and userID to null.
+ */
+const logout = async () => {
     try {
       await SecureStore.deleteItemAsync('userToken');
       await SecureStore.deleteItemAsync('refreshToken');
@@ -64,9 +79,14 @@ export const AuthProvider = ({ children }) => {
       console.error(e);
     }
   };
+
+  //PropTypes added for AuthProvider
+  AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
   
   return (
-    <AuthenticationContext.Provider value={{ isAuthenticated, userID, login, logout, loading }}>
+    <AuthenticationContext.Provider value={{ isAuthenticated, userID, login, logout }}>
       {children}
     </AuthenticationContext.Provider>
   );

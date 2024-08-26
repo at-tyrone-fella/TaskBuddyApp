@@ -3,8 +3,19 @@ import { StyleSheet, SafeAreaView, TouchableOpacity, Text } from 'react-native';
 import Logo from './HeaderComponents/Logo';
 import { height, width } from '../utility/DimensionsUtility';
 import { FontPreferences } from '../utility/FontPreferences';
+import PropTypes from 'prop-types';
 
 const LandingHeader = ({ navigation }) => {
+
+  /*
+  Added prop types for LandingHeader
+  */
+  LandingHeader.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+  }).isRequired,
+};
+  
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity onPress={() => {navigation.navigate('Landing')}}>

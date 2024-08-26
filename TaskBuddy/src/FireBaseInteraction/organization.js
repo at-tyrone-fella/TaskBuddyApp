@@ -22,23 +22,39 @@ export const createOrganization = async (organizationData) => {
 export const updateOrganizationMember = async (organizationID, userId) => {
   try {
     const organizationDocRef = doc(db, "organizations", organizationID);
-    await updateDoc(organizationDocRef, {
-      members: arrayUnion(userId)
-    });
+    const organizationDoc = await getDoc(organizationDocRef);
 
-    console.log("User added to the members array in organization with ID: ", organizationID);
-    return true;
+    if (organizationDoc.exists()) {
+
+      const organizationData = organizationDoc.data();
+      
+      const members = organizationData.members || [];
+      
+      if (members.indexOf(userId) === -1) { 
+        await updateDoc(organizationDocRef, {
+          members: arrayUnion(userId)
+        });
+        console.log("User added to the members array in organization with ID: ", organizationID);
+      } else {
+        console.log("User is already a member of the organization.");
+      }
+
+      return true;
+    } else {
+      console.error("No such organization document!");
+      return false;
+    }
   } catch (e) {
     console.error("Error updating document: ", e);
     return false;
   }
 };
 
+
 export const updateOrganization = async (organizationID, organizationData) => {
   try {
     const organizationDocRef = doc(db, "organizations", organizationID);
     await setDoc(organizationDocRef, organizationData, { merge: true });
-    console.log("Document updated with ID: ", organizationID);
     return true;
   } catch (e) {
     console.error("Error updating document: ", e);

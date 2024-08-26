@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet } from "react-native";
+import { View, Text, TextInput, StyleSheet, Alert } from "react-native";
 import { Card, Button } from "react-native-paper";
 import { width, height } from "../utility/DimensionsUtility";
 import { FontPreferences } from "../utility/FontPreferences";
-import { Picker } from "@react-native-picker/picker";
 import CountryPicker from "react-native-country-picker-modal";
-import moment from "moment-timezone";
-import { createClientUser, createClientOrganization } from "../FireBaseInteractionQueries/client";
+import { createClientUser, createClientOrganization } from "../FireBaseInteraction/client";
+import PropTypes from 'prop-types';
 
 const CreateClient = ({ navigation, screenName, setClientCreationID, setShowCreateClientForm }) => {
     const [clientName, setClientName] = useState("");
@@ -15,12 +14,11 @@ const CreateClient = ({ navigation, screenName, setClientCreationID, setShowCrea
     const [clientAddress, setClientAddress] = useState("");
     const [clientEmail, setClientEmail] = useState("");
     const [clientLocation, setClientLocation] = useState(null);
-    const [clientTimezone, setClientTimezone] = useState("");
     const [error, setError] = useState("");
 
     const createClient = () => {
         if (clientName === "" || clientContactNumber === "" || clientEmail === "" ) {
-            setError("Please fill in all fields.");
+            setError("Please fill in all required fields.");
             return;
         } else {
             const clientSetupData = {
@@ -30,86 +28,110 @@ const CreateClient = ({ navigation, screenName, setClientCreationID, setShowCrea
                 clientAddress: clientAddress,
                 clientEmail: clientEmail,
                 clientLocation: clientLocation,
-                clientTimezone: clientTimezone,
+                isClientActive: true
             };
 
             if (screenName === "SetupOrganization") {
-                    createClientOrganization(clientSetupData, (clientCreationID) => {
+                createClientOrganization(clientSetupData, async (clientCreationID) => {
                     setClientCreationID(clientCreationID);
                     setShowCreateClientForm(false);
-
                 });
             } else {
-                createClientUser(clientSetupData);
-                navigation.navigate('HomePage'); 
+                
+                const taskStatus = createClientUser(clientSetupData);
+                if(taskStatus)
+                {
+                    Alert.alert('Client created successfully !', 'New client created.',[{
+                        title: 'Ok',
+                        onPress: () => {
+                            setShowCreateClientForm(false);
+                        }
+                    }]);
+                }else{
+                     Alert.alert('Client could not be created !', 'Cannot create client at the moment',[{
+                        title: 'Ok',
+                        onPress: () => {
+                        }
+                    }]);
+                }
+
+
+              
             }
         }
         setError("");
     };
 
-    const allTimezones = moment.tz.names();
+    /**
+     * PropTypes added
+     */
+    CreateClient.propTypes = {
+        navigation: PropTypes.shape({
+            navigate: PropTypes.func.isRequired,
+        }).isRequired,
+        screenName: PropTypes.string.isRequired,
+        setClientCreationID: PropTypes.func.isRequired,
+        setShowCreateClientForm: PropTypes.func.isRequired,
+    };
 
     return (
         <Card style={styles.card}>
             <View style={styles.container}>
                 <Text style={styles.text}>Create Client</Text>
+
+                <Text style={styles.label}>Client Name *</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Client Name"
                     value={clientName}
                     onChangeText={setClientName}
                 />
+
+                <Text style={styles.label}>Client Business Number</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Client Business Number"
                     value={clientBusinessNumber}
                     onChangeText={setClientBusinessNumber}
                 />
+
+                <Text style={styles.label}>Client Contact Number *</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Client Contact Number"
                     keyboardType="phone-pad"
                     value={clientContactNumber}
                     onChangeText={setClientContactNumber}
                 />
+
+                <Text style={styles.label}>Client Address</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Client Address"
                     value={clientAddress}
                     onChangeText={setClientAddress}
                 />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Client Email Address"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    value={clientEmail}
-                    onChangeText={setClientEmail}
-                />
+                <Text style={styles.label}>Client Location</Text>
+ 
                 <View style={styles.countryPickerContainer}>
                     <CountryPicker
                         withFilter
                         withFlag
                         withCountryNameButton
                         onSelect={setClientLocation}
-                        containerButtonStyle={styles.countryPicker}
+                        
                     />
                     <Text style={styles.countryPickerText}>
-                        {clientLocation ? clientLocation.name : "Select Client Location"}
+                        {clientLocation ? clientLocation.name : ''}
                     </Text>
                 </View>
-                <View style={styles.pickerContainer}>
-                    <Picker
-                        selectedValue={clientTimezone}
-                        style={styles.picker}
-                        onValueChange={(itemValue) => setClientTimezone(itemValue)}
-                    >
-                        {allTimezones.map((timeZone) => (
-                            <Picker.Item key={timeZone} label={`${timeZone} (${moment.tz(timeZone).format('Z')})`} value={timeZone} />
-                        ))}
-                    </Picker>
-                </View>
+
+                <Text style={styles.label}>Client Email Address *</Text>
+                <TextInput
+                    style={styles.input}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={clientEmail}
+                    onChangeText={setClientEmail}
+                />
+
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 
                 <View style={styles.buttonContainer}>
@@ -140,16 +162,23 @@ const styles = StyleSheet.create({
         marginVertical: height * 0.05,
         padding: Math.round(width * 0.02 + height * 0.04) / 2,
         borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
-        width: width * 0.8,
+        width: width * 0.9,
         alignSelf: 'center',
     },
     container: {
         alignItems: "center",
     },
     text: {
-        fontSize: 18,
+        fontSize: FontPreferences.sizes.large,
         padding: 8,
+        fontWeight: "bold",
         marginBottom: height * 0.015,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: "bold",
+        marginBottom: 5,
+        alignSelf: 'flex-start',
     },
     input: {
         width: "100%",
@@ -157,29 +186,21 @@ const styles = StyleSheet.create({
         padding: width * 0.015,
         borderColor: "#ddd",
         borderWidth: 2,
-        borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
-    },
-    pickerContainer: {
-        width: "100%",
-        marginBottom: height * 0.015,
-        borderColor: "#ddd",
-        borderWidth: 2,
-        borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
-    },
-    picker: {
-        width: "100%",
+        borderRadius: 5,
     },
     countryPickerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderBottomWidth: 1,
         borderColor: '#ccc',
         marginBottom: height * 0.015,
+        width: width * 0.8,
         padding: width * 0.015,
+        borderWidth: 2
     },
     countryPickerText: {
         marginLeft: 8,
-        fontSize: FontPreferences.sizes.small,
+        fontSize: FontPreferences.sizes.medium,
+        color:'blue'
     },
     buttonContainer: {
         width: "70%",

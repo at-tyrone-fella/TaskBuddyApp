@@ -1,8 +1,8 @@
-import '../../firebaseConfig.js';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { Alert } from 'react-native';
 
-const SignInUser = (email, password, navigation, login, onSuccess, onError) => {
+const SignInUser = (email, password, login, onSuccess, onError) => {
+
     const auth = getAuth();
 
     signInWithEmailAndPassword(auth, email, password, onSuccess, onError)
@@ -23,7 +23,8 @@ const SignInUser = (email, password, navigation, login, onSuccess, onError) => {
             ]);
         })
         .catch((error) => {
-            onError(error.message);            
+            console.log("Error signing in: ", error.message);
+            onError("Invalid email or password");            
         });
 };
 

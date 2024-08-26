@@ -1,120 +1,70 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Animated } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Picker } from '@react-native-picker/picker';
 import { Card, Button } from 'react-native-paper';
-import { getProjectsFromUsers } from "../FireBaseInteractionQueries/projectInteractions";
-import { useFocusEffect } from "@react-navigation/native";
-import { createNewTask } from "../FireBaseInteractionQueries/manageTasks";
+import { getProjectsFromUsers, getDefaultProjectId } from '../FireBaseInteraction/projectInteractions';
+import { useFocusEffect } from '@react-navigation/native';
+import { createNewTask } from '../FireBaseInteraction/manageTasks';
 import { roundToNearestQuarter, convertToUTCZ } from '../utility/timeModifier';
 import ImagePickerModal from './ImagePickerModal';
+import PropTypes from 'prop-types';
 
-const TaskFormCard = ({ navigation ,isVisible, onClose, returnDateTime }) => {
+const TaskFormModal = ({ isVisible, onClose }) => {
   const [taskName, setTaskName] = useState('');
   const [startDatetime, setStartDatetime] = useState(null);
   const [endDatetime, setEndDatetime] = useState(null);
   const [projectRecord, setProjectRecord] = useState([]);
   const [isStartDatePickerVisible, setStartDatePickerVisibility] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisibility] = useState(false);
-  const [expenseNumber, setExpenseNumber] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseDescription, setExpenseDescription] = useState('');
   const [isImagePickerVisible, setIsImagePickerVisible] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
   const [selectedProject, setSelectedProject] = useState('');
+  const [receiptFile, setReceiptFile] = useState(null); 
   const [error, setError] = useState('');
 
-  const parseTimestamp = (timestamp) => {
-    const dateTime = new Date(timestamp);
-
-    const year = dateTime.getFullYear().toString();
-    const month = (dateTime.getMonth() + 1).toString().padStart(2, '0');
-    const date = dateTime.getDate().toString().padStart(2, '0');
-    const hour = dateTime.getHours().toString().padStart(2, '0');
-    const minute = dateTime.getMinutes().toString().padStart(2, '0');
-
-    return { year, month, date, hour, minute };
-  };
-
-  console.log("ReturnTime: ", returnDateTime);
-
-  const { year, month, date, hour, minute } = parseTimestamp(returnDateTime);
-
-  const fadeAnim = new Animated.Value(0);
-
-  useEffect(() => {
-    if (isVisible) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [isVisible]);
-
-  const showStartDatePicker = () => {
-    setStartDatePickerVisibility(true);
-  };
-
-  const hideStartDatePicker = () => {
-    setStartDatePickerVisibility(false);
-  };
+  const showStartDatePicker = () => setStartDatePickerVisibility(true);
+  const hideStartDatePicker = () => setStartDatePickerVisibility(false);
 
   const handleConfirmStartDate = (selectedDate) => {
     if (selectedDate < new Date()) {
       setError('Start time cannot be in the past. Please pick a valid start time.');
       setStartDatetime(new Date());
-      hideStartDatePicker();
-      return;
     } else {
       setStartDatetime(selectedDate);
-      hideStartDatePicker();
       setError('');
-      return;
     }
+    hideStartDatePicker();
   };
 
-  const showEndDatePicker = () => {
-    setEndDatePickerVisibility(true);
-  };
-
-  const hideEndDatePicker = () => {
-    setEndDatePickerVisibility(false);
-  };
+  const showEndDatePicker = () => setEndDatePickerVisibility(true);
+  const hideEndDatePicker = () => setEndDatePickerVisibility(false);
 
   const handleConfirmEndDate = (selectedDate) => {
     if (selectedDate < startDatetime) {
       setError('End time cannot be before start time. Please pick a valid end time.');
       setEndDatetime(null);
-      hideEndDatePicker();
-      return;
     } else {
-      setError('');
       setEndDatetime(selectedDate);
-      hideEndDatePicker();
-      return;
+      setError('');
     }
+    hideEndDatePicker();
   };
 
   useFocusEffect(
     useCallback(() => {
       const fetchProjects = async () => {
         try {
-          const projectData = await new Promise((resolve, reject) => {
-            getProjectsFromUsers((data) => {
-              resolve(data);
-            });
+          const projectData = await new Promise((resolve) => {
+            getProjectsFromUsers((data) => resolve(data));
           });
-
-          const record = projectData.map(({ project, projectName }) => ({ project, projectName }));
+          const projectActiveList = projectData.filter((project) => project.projectActive === true);
+          console.log("ProjectData",projectData)
+          const record = projectActiveList.map(({ project, projectName }) => ({ project, projectName }));
           setProjectRecord(record);
-          console.log("Project data here: ", record);
         } catch (error) {
-          console.error("Error fetching projects:", error);
+          setError('Error fetching projects');
         }
       };
 
@@ -124,61 +74,115 @@ const TaskFormCard = ({ navigation ,isVisible, onClose, returnDateTime }) => {
 
   const handleSubmit = async () => {
     setError('');
+    console.log("vghvghv")
 
-    if (taskName === '' || startDatetime === null || selectedProject === '') {
-      setError('Please fill in all required fields.');
+    if(!taskName)
+    {
+      setError('Please fill all required fields')
       return;
-    } else {
-      setError('');
+    }
 
-      const repStartDateTime = await roundToNearestQuarter(startDatetime);
-      const repEndDateTime = await roundToNearestQuarter(endDatetime);
+    if (!taskName || !startDatetime || !selectedProject) {
+      console.log("chgcvhgvg")
 
-      console.log(convertToUTCZ(startDatetime));
-      console.log(convertToUTCZ(endDatetime));
-
-      const payload = {
-        taskName: taskName,
-        startDatetime: convertToUTCZ(startDatetime),
-        repStartDateTime: repStartDateTime,
-        endDatetime: convertToUTCZ(endDatetime),
-        repEndDateTime: repEndDateTime,
-        expenseAmount: expenseNumber,
-        selectedProject: selectedProject,
-      };
-
-      console.log("Payload:", payload);
-
-      try {
-        const addTaskStatus = await new Promise((resolve) => {
-          createNewTask(payload, (res) => {
-            resolve(res);
-          });
-        });
-
-        if (addTaskStatus) {
-          console.log("Task added successfully");
-          onClose();
-        } else {
-          console.log("Error adding task");
-          setError('Error adding task');
+      if(taskName && startDatetime && !selectedProject)
+      {
+        console.log("ca.fcg")
+        Alert.alert('Is this your personal task ?','Only personal tasks should be created without a project.',[{
+          text:'No',
+          onPress: () => {
+            return;
+          }
+      },{
+        text:'Yes, Create Task!',
+        onPress: () => {
+          createPersonalTask();
         }
-      } catch (error) {
-        console.error("Error in handleSubmit:", error);
-        setError('Error in submission');
+      }]);
+      }
+      else{
+        console.log("callled")
+        createProfessionalTask();
       }
     }
+    else{
+      createProfessionalTask();
+    }
+
   };
 
-  const handleImagePicked = (image) => {
-    setSelectedFile(image);
-    setIsImagePickerVisible(false);
-  };
+  const createPersonalTask = async () => {
+
+    const Default_Project_Id = await getDefaultProjectId();
+
+    console.log("DefP",Default_Project_Id);
+
+    const repStartDateTime = await roundToNearestQuarter(startDatetime);
+    const repEndDateTime = await roundToNearestQuarter(endDatetime);
+
+    const payload = {
+      taskName,
+      startDatetime: convertToUTCZ(startDatetime),
+      repStartDateTime,
+      endDatetime: convertToUTCZ(endDatetime),
+      repEndDateTime,
+      expense:{expenseAmount: expenseAmount,
+      expenseDescription: expenseDescription,
+      receiptFile: receiptFile},
+      selectedProject: Default_Project_Id,
+    };
+
+  try {
+      const addTaskStatus = await new Promise((resolve) => {
+        createNewTask(payload, (res) => resolve(res));
+      });
+
+      if (addTaskStatus) {
+        onClose();
+      } else {
+        setError('Error adding task');
+      }
+    } catch (error) {
+      setError('Error in submission');
+  }}
+
+const createProfessionalTask = async () => {
+
+    const repStartDateTime = await roundToNearestQuarter(startDatetime);
+    const repEndDateTime = await roundToNearestQuarter(endDatetime);
+
+    const payload = {
+      taskName,
+      startDatetime: convertToUTCZ(startDatetime),
+      repStartDateTime,
+      endDatetime: convertToUTCZ(endDatetime),
+      repEndDateTime,
+      expense:[{expenseAmount: expenseAmount,
+      expenseDescription: expenseDescription,receiptFile:receiptFile}],
+      selectedProject,
+    };
+
+    try {
+      const addTaskStatus = await new Promise((resolve) => {
+        createNewTask(payload, (res) => resolve(res));
+      });
+
+      if (addTaskStatus) {
+        onClose();
+      } else {
+        setError('Error adding task');
+      }
+    } catch (error) {
+      setError('Error in submission');
+    }
+  }
+
+  const handleImagePicked = () => setIsImagePickerVisible(false);
 
   if (!isVisible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+    <View style={styles.overlay}>
       <View style={styles.modalContent}>
         <Card style={styles.card}>
           <View style={styles.modalContainer}>
@@ -195,7 +199,7 @@ const TaskFormCard = ({ navigation ,isVisible, onClose, returnDateTime }) => {
             <DateTimePickerModal
               isVisible={isStartDatePickerVisible}
               mode="datetime"
-              date={new Date(year, month - 1, date, hour, minute) || new Date()}
+              date={startDatetime || new Date()}
               onConfirm={handleConfirmStartDate}
               onCancel={hideStartDatePicker}
               minimumDate={new Date()}
@@ -206,19 +210,21 @@ const TaskFormCard = ({ navigation ,isVisible, onClose, returnDateTime }) => {
             <DateTimePickerModal
               isVisible={isEndDatePickerVisible}
               mode="datetime"
+              date={endDatetime || new Date()}
               onConfirm={handleConfirmEndDate}
               onCancel={hideEndDatePicker}
-              minimumDate={new Date(startDatetime)}
+              minimumDate={startDatetime || new Date()}
             />
             <View style={styles.expenseContainer}>
               <TextInput
                 style={styles.expenseInput}
                 placeholder="Enter Expense Amount"
-                value={expenseNumber}
-                onChangeText={setExpenseNumber}
+                value={expenseAmount}
+                onChangeText={setExpenseAmount}
                 keyboardType="numeric"
               />
-              <Button mode="outlined" onPress={() => setIsImagePickerVisible(true)}  style={styles.receiptButton} >
+              <TextInput style={styles.expenseInput} placeholder='Expense Description' onChangeText={setExpenseDescription}/>
+              <Button mode="outlined" onPress={() => setIsImagePickerVisible(true)} style={styles.receiptButton}>
                 + Receipt
               </Button>
             </View>
@@ -246,13 +252,19 @@ const TaskFormCard = ({ navigation ,isVisible, onClose, returnDateTime }) => {
           </View>
         </Card>
       </View>
-       <ImagePickerModal
+      <ImagePickerModal
         isVisible={isImagePickerVisible}
         onClose={() => setIsImagePickerVisible(false)}
         onImagePicked={handleImagePicked}
+        setReceiptFile={setReceiptFile}
       />
-    </Animated.View>
+    </View>
   );
+};
+
+TaskFormModal.propTypes = {
+  isVisible: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 const styles = StyleSheet.create({
@@ -359,4 +371,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TaskFormCard;
+export default TaskFormModal;

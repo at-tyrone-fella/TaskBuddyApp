@@ -1,133 +1,175 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet } from "react-native";
+import { View, Text, TextInput, StyleSheet, Alert } from "react-native";
 import { Card, Button, Checkbox } from "react-native-paper";
 import { width, height } from "../utility/DimensionsUtility";
 import { FontPreferences } from "../utility/FontPreferences";
-import { createUser,  getMessages }  from "../auth/signUp";
+import { createUser, getMessages, verifyEmail } from "../auth/signUp";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import PropTypes from "prop-types";
 
 const SignUpForm = ({ navigation }) => {
-
-    const [checked, setChecked] = useState(false);
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+    const [form, setForm] = useState({
+        email: "",
+        password: "",
+        confirmPassword: "",
+        checked: false,
+        showPassword: true,
+    });
     const [error, setError] = useState("");
-    const [showPassword, setShowPassword] = useState(true);
+    const [successMessage, setSuccessMessage] = useState("");
+    const [isEmailValid, setIsEmailValid] = useState(false);
+
+    const handleChange = (name, value) => {
+        setForm(prevForm => ({ ...prevForm, [name]: value }));
+    };
 
     const createSignUp = () => {
-        if(email === "" || password === "" || confirmPassword === "") {
+        const { email, password, confirmPassword, checked } = form;
+
+        if (!email || !password || !confirmPassword) {
             setError("Please fill in all fields.");
-            setIsSubmitted(false);
             return;
         }
 
         if (password !== confirmPassword) {
-            setIsSubmitted(true);
             setError("Passwords do not match.");
             return;
         }
 
-        setError("");
-        
         if (!checked) {
             setError("You must agree to join TaskBuddy.");
-            setIsSubmitted(false);
             return;
         }
-        
-        createUser(email, password,
-        () => {
-            navigation.navigate('ScrollSignInScreen', {userRegistered: true});
-            },
-        (errorMessage) => {
-            console.log("Error Message: ", errorMessage);
-            setError(getMessages(errorMessage));
-        });
+
+        createUser(
+            email,
+            password,
+            () => navigation.navigate("ScrollSignInScreen", { userRegistered: true }),
+            errorMessage => {
+                setError(getMessages(errorMessage));
+                Alert.alert("Sign-Up Failed", "Please try again later.", [{ text: "OK" }]);
+            }
+        );
     };
 
-    const toggleShowPassword = () => {
-        setShowPassword(!showPassword);
+    const handleVerifyEmail = async () => {
+        try {
+            const isValid = await verifyEmail(form.email);
+            setIsEmailValid(isValid);
+            setSuccessMessage(isValid ? "Email verified successfully." : "Invalid email format or email does not exist.");
+        } catch {
+            setError("Error verifying email.");
+        }
     };
 
     return (
         <Card style={styles.card}>
             <View style={styles.container}>
                 <Text style={styles.text}>Sign Up</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    value={email}
-                    onChangeText={setEmail}
-                />
+
+                <View style={styles.emailContainer}>
+                    <TextInput
+                        style={[styles.input, styles.emailInput]}
+                        placeholder="Email"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        value={form.email}
+                        onChangeText={value => handleChange("email", value)}
+                    />
+                    <Button
+                        mode="contained"
+                        onPress={handleVerifyEmail}
+                        style={styles.verifyButton}
+                        disabled={!form.email.trim()}
+                    >
+                        Verify
+                    </Button>
+                </View>
+
                 <TextInput
                     style={styles.input}
                     placeholder="Password"
                     secureTextEntry={true}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    value={password}
-                    onChangeText={setPassword}
+                    value={form.password}
+                    onChangeText={value => handleChange("password", value)}
                 />
-                <View style={styles.inputContainer}> 
+
+                <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.input}
                         placeholder="Confirm Password"
-                        secureTextEntry={showPassword}
+                        secureTextEntry={form.showPassword}
                         autoCapitalize="none"
                         autoCorrect={false}
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
+                        value={form.confirmPassword}
+                        onChangeText={value => handleChange("confirmPassword", value)}
                     />
-                    <MaterialCommunityIcons 
-                        name={showPassword ? 'eye-off' : 'eye'} 
-                        size={24} 
+                    <MaterialCommunityIcons
+                        name={form.showPassword ? "eye-off" : "eye"}
+                        size={24}
                         color="#aaa"
-                        style={styles.icon} 
-                        onPress={toggleShowPassword} 
+                        style={styles.icon}
+                        onPress={() => handleChange("showPassword", !form.showPassword)}
                     />
                 </View>
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
                 <View style={styles.checkboxContainer}>
                     <Checkbox
-                        status={checked ? 'checked' : 'unchecked'}
-                        onPress={() => setChecked(!checked)}
+                        status={form.checked ? "checked" : "unchecked"}
+                        onPress={() => handleChange("checked", !form.checked)}
                     />
-                    <Text style={[styles.checkboxText, isSubmitted && !checked && styles.highlight]}>I want to join TaskBuddy.</Text>
+                    <Text style={styles.checkboxText}>I want to join TaskBuddy.</Text>
                 </View>
+
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                {successMessage ? <Text style={styles.successText}>{successMessage}</Text> : null}
+
                 <View style={styles.buttonContainer}>
-                    <Button mode="contained" onPress={createSignUp} style={styles.button}>Sign Up</Button>
+                    <Button
+                        mode="contained"
+                        onPress={createSignUp}
+                        style={styles.button}
+                        disabled={!isEmailValid}
+                    >
+                        Sign Up
+                    </Button>
                 </View>
             </View>
         </Card>
     );
 };
 
+SignUpForm.propTypes = {
+    navigation: PropTypes.shape({
+        navigate: PropTypes.func.isRequired,
+    }).isRequired,
+};
+
 const styles = StyleSheet.create({
     card: {
         marginVertical: height * 0.05,
-        padding: Math.round(width * 0.02 + height * 0.04) / 2,
-        borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
-        width: width * 0.8, 
-        alignSelf: 'center', 
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderColor: '#ccc',
+        padding: width * 0.04,
+        borderRadius: 12,
+        width: width * 0.9,
+        alignSelf: "center",
     },
     container: {
         alignItems: "center",
     },
     text: {
         fontSize: 18,
-        padding: 8,
         marginBottom: height * 0.015,
+    },
+    emailContainer: {
+        width: "100%",
+        marginBottom: height * 0.015,
+    },
+    emailInput: {
+        width: "100%",
+        marginBottom: height * 0.01,
     },
     input: {
         width: "100%",
@@ -135,7 +177,13 @@ const styles = StyleSheet.create({
         padding: width * 0.015,
         borderColor: "#ddd",
         borderWidth: 2,
-        borderRadius: Math.round(width * 0.02 + height * 0.04) / 2,
+        borderRadius: 12,
+    },
+    inputContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        borderBottomWidth: 1,
+        borderColor: "#ccc",
     },
     checkboxContainer: {
         flexDirection: "row",
@@ -149,37 +197,31 @@ const styles = StyleSheet.create({
     buttonContainer: {
         width: "70%",
         alignItems: "center",
-        marginTop: height * 0.020,
-    },
-    smallText: {
-        fontSize: 12,
-        color: '#666',
-        textAlign: 'center',
-        marginTop: height * 0.025,
+        marginTop: height * 0.02,
     },
     button: {
         width: 250,
         borderRadius: 25,
     },
+    verifyButton: {
+        marginLeft: "10%",
+        width: "80%",
+        borderRadius: 25,
+    },
     errorText: {
-        color: 'red',
+        color: "red",
         marginBottom: 10,
     },
-    checkboxChecked: {
-        width: 16,
-        height: 16,
-        backgroundColor: '#000',
-    },
-    highlight: {
-        borderColor: 'red',
-        borderWidth: 2,
+    successText: {
+        color: "green",
+        marginBottom: 10,
     },
     icon: {
-        position: 'absolute',
+        position: "absolute",
         right: 10,
         height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
 });
 
