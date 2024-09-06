@@ -1,12 +1,16 @@
 import { Alert } from 'react-native';
 import { createClientUser, createClientOrganization } from "../FireBaseInteraction/client";
 
-export const createClient = async (
-  clientData,
-  screenName,
-  setClientCreationID,
-  setShowCreateClientForm
-) => {
+/**
+ * This metod creates a client
+ * @param {*} clientData 
+ * @param {*} screenName 
+ * @param {*} setClientCreationID 
+ * @param {*} setShowCreateClientForm 
+ * @returns 
+ */
+export const createClient = async (clientData, screenName, setClientCreationID, setShowCreateClientForm) => 
+  {
   const { clientName, clientBusinessNumber, clientContactNumber, clientAddress, clientEmail, clientLocation } = clientData;
 
   if (clientName === "" || clientContactNumber === "" || clientEmail === "") {

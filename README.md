@@ -4,6 +4,7 @@
 
 To run this application intall packages in package.json.
 Add Firebase credentails via firebase.config.js
+Update path at "node_modules\expo\AppEntry.js"
 Run this application using npx expo start
 Scan QR code using your expo Go Application in Expo Go mode.
 Make sure you devices are in same private Wifi network.

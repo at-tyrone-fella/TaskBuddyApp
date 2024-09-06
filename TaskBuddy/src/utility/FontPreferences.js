@@ -1,3 +1,7 @@
+
+/**
+ * Font preferences set to be used throughout application.
+ */
 const FontPreferences = {
     fontFamily: 'Roboto',
     sizes: {

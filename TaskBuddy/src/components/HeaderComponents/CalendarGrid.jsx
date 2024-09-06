@@ -111,7 +111,7 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   /**
-   * 
+   * This method calculates dates for hour banner
    * @param {*} numDays 
    * @returns 
    */
@@ -137,6 +137,12 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
     }
   }, [numDays]);
 
+
+  /**
+   * This method will render each hour row
+   * @param {*} hour 
+   * @returns 
+   */
   const renderHourCell = (hour) => {
     
     const proportionsForHour = taskHours.flatMap(task =>

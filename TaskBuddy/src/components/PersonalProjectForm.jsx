@@ -290,7 +290,6 @@ const PersonalProjectForm = ({ navigation, setShowSidePanel }) => {
           />
         </View>
 
-        {/* Color Picker */}
         <View style={styles.stepContainer}>
           <Text style={styles.label}>Select Project Color</Text>
           <View style={{ zIndex: openColor ? 1000 : 1 }}>

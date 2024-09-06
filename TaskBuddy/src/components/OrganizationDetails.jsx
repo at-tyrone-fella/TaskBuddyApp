@@ -72,8 +72,6 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
   };
 
   const handleSubmit = () => {
-    console.log("AddUserDetailsList:",addUserDetailsList);
-    console.log("NewUserList", newUserList)
     if (orgName === "") {
       setError("Please fill in all fields.");
       return;
@@ -82,12 +80,8 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
         organizationName: orgName,
         organizationDescription: orgDescription,
         clients: selectedClients,
-       // members: addUserDetailsList.map(user => user.userId),
       };
-
-
       updateOrganization(organizationData.id, organizationUpdateData).then( async () => {
-
         if(newUserList.length !== 0)
         {
           const resultSendMessage = await sendPayloadMessage(newUserList, organizationUpdateData.organizationName, organizationData.id);
@@ -186,7 +180,6 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
     } else {
       setError("User record not found or user already added");
     }
-    console.log("AddUSerList",addUserList);
   };
 
   const renderItem = ({ item }) => (

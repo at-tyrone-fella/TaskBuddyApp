@@ -93,7 +93,6 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
   };
 
   const addUser = () => {
-    
     if (fetchedUserData && !addUserList.some((user) => user.id === fetchedUserData.docId)) {
       setAddUserList([...addUserList, fetchedUserData]);
       setFetchedUserData(null);

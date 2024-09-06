@@ -34,7 +34,6 @@ const UpdateTaskFormCard = ({ isVisible, onClose, task }) => {
 
   const showStartDatePicker = () => setStartDatePickerVisibility(true);
   const hideStartDatePicker = () => setStartDatePickerVisibility(false);
-
   const showEndDatePicker = () => setEndDatePickerVisibility(true);
   const hideEndDatePicker = () => setEndDatePickerVisibility(false);
 
@@ -216,7 +215,6 @@ const renderExpense = (individualExpense, index) => {
     </View>
   );
 };
-
 
   const handleImagePicked = () => setIsImagePickerVisible(false);
 

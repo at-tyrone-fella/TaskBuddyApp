@@ -40,7 +40,6 @@ const Client = ({ navigation }) => {
   useEffect(() => {
     const fetchClientList = async () => {
       try {
-        console.log("I am fetching again......")
         const unsubscribe = await fetchUserClients((clientList) => {
           if (clientList && clientList.length > 0) {
             getUserClientProfiles(clientList, async (clientProfiles) => {

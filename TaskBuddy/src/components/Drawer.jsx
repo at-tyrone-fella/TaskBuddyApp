@@ -14,9 +14,9 @@ const Drawer = ({ navigation }) => {
     logout();
   };
 
-  /**
-   * Added PropTypes for navigation
-   */
+/**
+ * Added PropTypes for navigation
+ */
  Drawer.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,

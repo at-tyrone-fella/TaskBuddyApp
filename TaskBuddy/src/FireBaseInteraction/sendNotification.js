@@ -1,7 +1,6 @@
 import { createNewInvitation } from "./manageInvitation";
 import { STATUS_VALUES } from "./manageInvitation";
 
-
 /**
  * This method sends payload message to create a new invitation to the invitations collections.
  * It returns a list of failed invitations that were not created for some users.

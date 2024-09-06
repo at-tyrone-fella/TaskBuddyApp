@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { width } from '../utility/DimensionsUtility';
