@@ -9,8 +9,8 @@ import PropTypes from 'prop-types';
 
 const SignInForm = ({ navigation }) => {
 
-    const [email, setEmail] = useState("at56725111998@gmail.com");
-    const [password, setPassword] = useState("at567@A");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(true);
 

@@ -16,11 +16,6 @@
       "bundleIdentifier": "com.abhishektyronefella.TaskBuddy"
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
-      "permissions": [
-        "WAKE_LOCK",
-        "RECEIVE_BOOT_COMPLETED"
-      ],
       "adaptiveIcon": {
         "foregroundImage": "",
         "backgroundColor": "#ffffff"
