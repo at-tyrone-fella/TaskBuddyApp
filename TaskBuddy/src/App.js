@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import Wrapper from './Wrapper.js';
+import React from 'react';
+import {Wrapper} from './Wrapper.js';
 import { AuthProvider, useAuth } from './auth/AuthContext.js';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -10,7 +10,6 @@ import { ScrollWrappedLanding, ScrollWrappedSignUp,
          ScrollWrappedSignInScreen, ScrollWrappedHomePage, ScrollWrappedUserProfile,
          ScrollWrappedOrganization, ScrollWrappedCreateClient, ScrollWrappedProject,
          ScrollWrappedNotification, ScrollWrappedReports } from './utility/wrappedScrollViewScreen.js';
-import { registerBackgroundFetchTask, unregisterBackgroundFetchTask } from './utility/backgroundTokenRefresh.js';
 
 /**
  * Stack navigator for authentication screens and drawer navigator to navigate between different sections after successful login.
@@ -36,7 +35,7 @@ const AuthStackNavigator = () => {
 
 /**
  * This component returns custom DrawerStackNavigator .
- * @returns 
+ * @returns DrawerStackNavigator
  */
 const DrawerNavigator = () => {
   return (
@@ -53,6 +52,10 @@ const DrawerNavigator = () => {
   );
 };
 
+/**
+ * 
+ * @returns AppNavigator  returns DrawerNavigator or AuthStackNavigator based upon isAuthenticated
+ */
 const AppNavigator = () => {
   const { isAuthenticated } = useAuth();
 
@@ -64,23 +67,6 @@ const AppNavigator = () => {
 };
 
 export default function App() {
-
-  /**
-   * This useEffect will registerBackground fetch task.
-   */
-  useEffect(() => {
-    const initializeApp = async () => {
-      console.log("initialize app")
-      await registerBackgroundFetchTask();
-    };
-
-    initializeApp();
-
-    return () => {
-      unregisterBackgroundFetchTask();
-    };
-  },[]);
-
 
   /**
    * AuthProvider will passdown props such as isAuthenticated, Login , Logout throught the child componenets.

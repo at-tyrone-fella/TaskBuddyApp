@@ -3,6 +3,13 @@ import { doc, setDoc, getDoc, onSnapshot, updateDoc, getDocs, collection, arrayU
 import * as SecureStore from 'expo-secure-store';
 import { db } from '../../firebaseConfig';
 
+
+/**
+ * This method updates user profile
+ * @param {*} userProfileData 
+ * @param {*} member 
+ * @returns 
+ */
 export const updateUserProfile = async (userProfileData, member) => {
   let uid;
 
@@ -42,6 +49,13 @@ export const updateUserProfile = async (userProfileData, member) => {
   }
 };
 
+
+/**
+ * This method updates user project profile
+ * @param {*} projectId 
+ * @param {*} member 
+ * @returns 
+ */
 export const updateUserProjectProfile = async (projectId, member) => {
   let uid;
 
@@ -79,21 +93,13 @@ export const updateUserProjectProfile = async (projectId, member) => {
   }
 };
 
-export const fetchOrgCreatorDetails = async (callback) => {
 
-  const uid = await SecureStore.getItemAsync('userID');
-  if (!uid) throw new Error("No user ID found in SecureStore");
-
-  onSnapshot(doc(db, "users", uid), (doc) => {
-      if(doc.exists()) {
-        callback({"docId":doc.data().userId, "username":doc.data().username});
-      } else {
-        callback('');
-        console.log("No such document!");
-      };
-    });
-};
-
+/**
+ * This meethod updates invitation list in user profile of user
+ * @param {*} invitationId 
+ * @param {*} uid 
+ * @returns 
+ */
 export const updatedUserClientProfileInvitation = async (invitationId, uid) => {
 
   try {
@@ -110,39 +116,11 @@ export const updatedUserClientProfileInvitation = async (invitationId, uid) => {
     }
 };
 
-export const getPushToken = async (uid,callback) => {
-
-  onSnapshot(doc(db, "users", uid), (doc) => {
-    if(doc.exists()) {
-      callback(doc.data().pushToken);
-    } else {
-      callback('');
-      console.log("No such document!");
-    };
-  });
-
-};
-
-
-export const updatePushToken = async (userProfileData) => {
-
-  const uid = await SecureStore.getItemAsync('userID');
-  if (!uid) throw new Error("No user ID found in SecureStore");
-
-  try {
-      const docRef = doc(db, "users", uid);
-      await updateDoc(docRef, {
-        pushToken: userProfileData.pushToken,
-      });
-    
-      return true;
-    } catch (e) {
-      console.error("Error adding pushToken: ", e);
-      return false;
-    }
-};
-
-
+/**
+ * This method updates user client profile with new client id
+ * @param {*} clientData 
+ * @returns 
+ */
 export const updateUserClientProfile = async (clientData) => {
 
   const uid = await SecureStore.getItemAsync('userID');
@@ -161,6 +139,12 @@ export const updateUserClientProfile = async (clientData) => {
     }
 };
 
+/**
+ * This mehod updates user profile with organization
+ * @param {*} organizationID 
+ * @param {*} userId 
+ * @returns 
+ */
 export const addOrganizationToUser = async (organizationID, userId) => {
   try {
     const userDocRef = doc(db, "users", userId);
@@ -176,6 +160,11 @@ export const addOrganizationToUser = async (organizationID, userId) => {
 };
 
 
+/**
+ * This method updates user task list in profile
+ * @param {*} taskData 
+ * @returns 
+ */
 export const updateUserTaskProfile = async (taskData) => {
 
   const uid = await SecureStore.getItemAsync('userID');
@@ -194,17 +183,54 @@ export const updateUserTaskProfile = async (taskData) => {
     }
 };
 
+/**
+ * Thismethod updates the user task with the new payload data
+ * @param {*} payload 
+ * @returns 
+ */
+export const updateUserTaskList = async (payload) => {
+  const uid = await SecureStore.getItemAsync('userID');
+  if (!uid) throw new Error("No user ID found in SecureStore");
 
+  try {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const userData = docSnap.data();
+      const tasks = userData.tasks || [];
+      const taskIndex = tasks.findIndex(task => task.taskID === payload.taskID);
+      if (taskIndex !== -1) {
+        tasks[taskIndex] = { ...tasks[taskIndex], ...payload };
+      } else {
+        tasks.push({ taskID, ...payload });
+      }
+
+      await updateDoc(docRef, { tasks });
+
+      return true;
+    } else {
+      console.error("No such document!");
+      return false;
+    }
+  } catch (e) {
+    console.error("Error updating document: ", e);
+    return false;
+  }
+};
+
+/**
+ * This method updates user profile data with userProfileData
+ * @param {*} userProfileData 
+ * @returns 
+ */
 export const addUserProfile = async (userProfileData) => {
-
-  
   const uid = await SecureStore.getItemAsync('userID');
   if (!uid) throw new Error("No user ID found in SecureStore");
 
   try {
 
     const docRef = doc(db, "users", uid);
-    await setDoc(docRef, userProfileData);
+    await setDoc(docRef, userProfileData,{merge:true});
 
     return true;
   } catch (e) {
@@ -213,6 +239,10 @@ export const addUserProfile = async (userProfileData) => {
   }
 };
 
+/**
+ * This method fetches user profile and passes it to callback
+ * @param {*} callback 
+ */
 export const getUserProfiles = async (callback) => {
   
   const uid = await SecureStore.getItemAsync('userID');
@@ -229,6 +259,12 @@ export const getUserProfiles = async (callback) => {
 
 };
 
+
+/**
+ * This method fetches username of logged in user
+ * @param {*} callback 
+ * @returns 
+ */
 export const getUserName = async (callback) => {
   const uid = await SecureStore.getItemAsync('userID');
   if (!uid) throw new Error("No user ID found in SecureStore");
@@ -246,10 +282,14 @@ export const getUserName = async (callback) => {
   });
 };
 
+
+/**
+ * This method filters username and returns array
+ * @param {*} username 
+ * @param {*} callback 
+ */
 export const checkUserNames = async (username, callback) => {
-
   let returnArray = [];
-
   try{
     const querySnapshot = await getDocs(collection(db, "users"));
     querySnapshot.forEach((doc) => {
@@ -270,8 +310,13 @@ export const checkUserNames = async (username, callback) => {
   }
 };
 
-export const checkUniqueUserName = async (username, callback) => {
 
+/**
+ * This method checks for unique username and passes JSON to callback
+ * @param {*} username 
+ * @param {*} callback 
+ */
+export const checkUniqueUserName = async (username, callback) => {
   const querySnapshot = await getDocs(collection(db, "users"));
   let searchResult = false;
   querySnapshot.forEach((doc) => {
@@ -286,6 +331,12 @@ export const checkUniqueUserName = async (username, callback) => {
   }
 };
 
+
+/**
+ * This method fetches client list and passes to callback
+ * @param {*} callback 
+ * @returns 
+ */
 export const getUserClientProfiles = async (callback) => {
 
   const uid = await SecureStore.getItemAsync('userID');
@@ -305,6 +356,11 @@ export const getUserClientProfiles = async (callback) => {
 
 }
 
+/**
+ * This method fetches and returns userID and userName of users in a list.
+ * @param {*} userList 
+ * @returns 
+ */
 export const getUserMemberDetails = async (userList) => {
   let userDetailsList = [];
   try {
@@ -332,6 +388,14 @@ export const getUserMemberDetails = async (userList) => {
   }
 };
 
+
+/**
+ * This method deletes invitation from user doc
+ * @param {*} invitationId 
+ * @param {*} userId 
+ * @param {*} setLockRefresh 
+ * @returns 
+ */
 export const deleteInvitationFromUser = async (invitationId, userId,setLockRefresh) => {
   setLockRefresh(true);
   try {
@@ -361,6 +425,11 @@ export const deleteInvitationFromUser = async (invitationId, userId,setLockRefre
   }
 };
 
+/**
+ * This method setup user profile listener to update calendar grid
+ * @param {*} setTriggerPoint 
+ * @returns 
+ */
 export const setupUserProfileListener = (setTriggerPoint) => {
   return async () => {
     try {

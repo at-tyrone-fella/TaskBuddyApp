@@ -10,6 +10,9 @@ import Projects from "../screens/Projects";
 import NotificationScreen from "../screens/NotificationScreen";
 import Reports from "../screens/Reports";
 
+/**
+ * This component wraps all screens inside ScrollView with AddScrollView
+ */
 export const ScrollWrappedLanding = AddScrollView(Landing);
 export const ScrollWrappedSignUp = AddScrollView(SignUpScreen);
 export const ScrollWrappedSignInScreen = AddScrollView(SignInScreen);

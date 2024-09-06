@@ -1,15 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  Alert,
-} from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Modal, FlatList, Alert } from "react-native";
 
 import { Card, Button, IconButton } from "react-native-paper";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -21,7 +12,7 @@ import { getUserClientProfiles } from "../FireBaseInteraction/userProfile";
 import { createOrganization } from "../FireBaseInteraction/organization";
 import { getClientDetails } from "../FireBaseInteraction/client";
 import CreateClient from "./CreateClient";
-import SignUpForm from "../components/SignUpForm";
+import SignUpForm from "./SignUpForm";
 import { checkUserNames } from "../FireBaseInteraction/userProfile";
 import { sendPayloadMessage } from "../FireBaseInteraction/sendNotification";
 import { updateOrganizationMember } from "../FireBaseInteraction/organization";
@@ -96,10 +87,6 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
       });
     }
   }, [clientCreationID]);
-
-  const cleanupCreatedClients = () => {
-    console.log(clientCreationID);
-  }
 
   const handleCreateClient = () => {
     setShowCreateClientForm(true);
@@ -191,7 +178,6 @@ const OrganizationForm = ({ navigation, setShowSidePanel }) => {
         }  
         );
 
-        console.log("ClientList before pushing to list",clientListActive);
         const clientList = clientListActive.map((client) => ({
           
           label: client.clientName,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, SafeAreaView, StyleSheet, Text, TouchableOpacity, ScrollView, Card } from "react-native";
+import { View, SafeAreaView, StyleSheet, Text, TouchableOpacity, ScrollView } from "react-native";
 import { Button } from 'react-native-paper';
 import Header from "../components/Header.jsx";
 import { height, width } from "../utility/DimensionsUtility.js";
@@ -91,7 +91,7 @@ const Organization = ({ navigation }) => {
             </View>
             <View style={[styles.mainContainer]}>
               <View style={styles.descriptionBox}>
-                  <Text style={styles.descriptionHeader}>Start your own Orgnaization Here !!</Text>
+                  <Text style={styles.descriptionHeader}>Start Your Own Organization Here!!</Text>
                   <Text style={styles.descriptionText}>
                   Start your own organization with friends or colleagues. Create and add clients, and gain the ability to initiate new projects. Take the first step—click on "Create Organization" below.
                   </Text>

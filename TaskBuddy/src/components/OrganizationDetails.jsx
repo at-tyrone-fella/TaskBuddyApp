@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Modal, FlatList } from "react-native";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Modal, FlatList, Alert } from "react-native";
 import { Card, Button } from "react-native-paper";
 import DropDownPicker from "react-native-dropdown-picker";
 import { getUserClientProfiles } from "../FireBaseInteraction/userProfile";
 import { updateOrganization } from "../FireBaseInteraction/organization";
 import { getClientDetails } from "../FireBaseInteraction/client";
 import CreateClient from "./CreateClient";
+import { sendPayloadMessage } from "../FireBaseInteraction/sendNotification";
 import SignUpForm from "../components/SignUpForm";
 import { checkUserNames } from "../FireBaseInteraction/userProfile";
 import { getUserMemberDetails } from "../FireBaseInteraction/userProfile";
@@ -21,6 +22,7 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
   const [showCreateClientForm, setShowCreateClientForm] = useState(false);
   const [selectedClients, setSelectedClients] = useState(organizationData.clients || []);
   const [clients, setClients] = useState(organizationData.clients || []);
+  const [newUserList, setNewUserList] = useState([]);
   const [newClientList, setNewClientList] = useState([]);
   
   const [username, setUsername] = useState("");
@@ -70,6 +72,8 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
   };
 
   const handleSubmit = () => {
+    console.log("AddUserDetailsList:",addUserDetailsList);
+    console.log("NewUserList", newUserList)
     if (orgName === "") {
       setError("Please fill in all fields.");
       return;
@@ -78,9 +82,29 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
         organizationName: orgName,
         organizationDescription: orgDescription,
         clients: selectedClients,
-        members: addUserDetailsList.map(user => user.userId),
+       // members: addUserDetailsList.map(user => user.userId),
       };
-      updateOrganization(organizationData.id, organizationUpdateData).then(() => {
+
+
+      updateOrganization(organizationData.id, organizationUpdateData).then( async () => {
+
+        if(newUserList.length !== 0)
+        {
+          const resultSendMessage = await sendPayloadMessage(newUserList, organizationUpdateData.organizationName, organizationData.id);
+          if (resultSendMessage.length === 0) {
+            Alert.alert(
+              "Invitation Sent",
+              "Update successful. Invitation sent to new members",[{
+                title:'Ok'
+              }]
+            );
+          } else {
+            Alert.alert(
+              "Error",
+              "Invitation can't be sent to all members."
+            );
+          }
+        }      
         setShowDetails(false);
         setShowSidePanel(true);
         setisdataPassed(true);
@@ -157,11 +181,12 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
   const addUser = () => {
     if (fetchedUserData && !addUserList.some((user) => user.id === fetchedUserData.docId)) {
       setAddUserList([...addUserList, fetchedUserData.docId]);
+      setNewUserList([...newUserList, fetchedUserData.docId]);
       setFetchedUserData(null);
-      console.log("AddUSerList",addUserList);
     } else {
       setError("User record not found or user already added");
     }
+    console.log("AddUSerList",addUserList);
   };
 
   const renderItem = ({ item }) => (
@@ -302,20 +327,19 @@ const OrganizationDetails = ({ navigation, organizationData, setShowDetails, set
           <Modal transparent={true} animationType="fade">
             <TouchableOpacity style={styles.modalBackground} onPress={() => setShowSignUpModal(false)}>
               <TouchableWithoutFeedback>
-                <View style={styles.modalContent}>
                   <SignUpForm navigation={navigation}/>
-                </View>
               </TouchableWithoutFeedback>
             </TouchableOpacity>
           </Modal>
         )}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <View style={styles.buttonContainer}>
-          <Button mode="contained" onPress={handleSubmit} style={styles.button}>
-            Update Organization
-          </Button>
-          <Button mode="contained" onPress={() => { setShowSidePanel(true); setShowDetails(false) }} style={styles.button}>
+         
+          <Button mode="outlined" onPress={() => { setShowSidePanel(true); setShowDetails(false) }} style={styles.button}>
             Back
+          </Button>
+           <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+            Update Organization
           </Button>
         </View>
       </View>

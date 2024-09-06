@@ -39,6 +39,7 @@ const Reports = ({ navigation }) => {
     }, []);
 
   const handleProjectChange = (projectValue) => {
+
     setSelectedProject(projectValue);
     setStartDate(new Date());
     setEndDate(new Date());
@@ -67,6 +68,7 @@ const Reports = ({ navigation }) => {
     setShowEndDatePicker(false);
   };
 
+  //Share file triggered
   const postFilePrepShare = async () => {
     if (fileUri) {
       await shareFile(fileUri);
@@ -76,13 +78,15 @@ const Reports = ({ navigation }) => {
     }
   };
 
+  /**
+   * This method fetches report data and creates URI
+   */
   const handleSubmit = async () => {
     setLoading(true);
     if (selectedProject) {
       try {
         const reportData = await fetchReportData(selectedProject, startDate, endDate);
         const parsedData = await parseTaskData(reportData);
-
         if (parsedData.length > 0) {
 
           let projectName = "UnknownProject";

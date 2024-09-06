@@ -5,11 +5,7 @@ import SignUpForm from "../components/SignUpForm.jsx";
 import { Banner } from "react-native-paper";
 import PropTypes from 'prop-types';
 
-
 const SignUpScreen = ({navigation}) => {
-
-  
-
   const [visible, setVisible] = useState(true);
 
   /**
@@ -21,7 +17,6 @@ const SignUpScreen = ({navigation}) => {
     }).isRequired,
   };
   
-
   return (
     <SafeAreaView style={styles.container}>
       <View>

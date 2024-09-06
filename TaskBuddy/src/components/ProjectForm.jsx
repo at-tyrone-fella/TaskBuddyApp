@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, Platform, Modal } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, Modal } from 'react-native';
 import { Card, Button, IconButton } from 'react-native-paper';
 import { width, height } from '../utility/DimensionsUtility';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -395,11 +395,12 @@ const ProjectCreationForm = ({ navigation, setShowSidePanel }) => {
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         </View>
         <View style={styles.buttonContainer}>
-          <Button mode="contained" onPress={handleSubmit} style={styles.button}>
-            Create Project
-          </Button>
-          <Button mode="contained" onPress={handleGoBack} style={styles.button}>
+      
+          <Button mode="outlined" onPress={handleGoBack} style={styles.button}>
             Back
+          </Button>
+              <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+            Create Project
           </Button>
         </View>
       </View>

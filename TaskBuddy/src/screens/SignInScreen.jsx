@@ -6,7 +6,7 @@ import { useRoute } from '@react-navigation/native';
 import { Banner } from "react-native-paper";
 import PropTypes from 'prop-types';
 
-
+// Time to hide the banner
 const secondsToHide = 60000;
 
 const SignInScreen = ( {navigation } ) => {

@@ -31,12 +31,18 @@ export const createNewInvitation = async (payload, memberID) => {
     }
 };
 
+/**
+ * Thismethod is used to update the invitation status of a document in invitation collection when user accepts/deny invitaiton
+ * @param {} invitationId 
+ * @param {*} status 
+ * @returns 
+ */
 export const updateInvitationStatus = async (invitationId, status) => {
     
     try{
 
         const invRef = doc(db, "invitations", invitationId);
-        const resultUpdate = updateDoc(invRef, { status: status });
+        const resultUpdate = updateDoc(invRef, { data : {status: status} });
         if(resultUpdate)
         {
             return true;
@@ -50,6 +56,11 @@ export const updateInvitationStatus = async (invitationId, status) => {
     }
 }
 
+/**
+ * This method updates pending invitation once user accepts/denies invitation
+ * @param {*} uid 
+ * @returns 
+ */
 export const refreshNotificationList = async (uid) => {
     const userDocRef = doc(db, "users", uid);
     const userDoc = await getDoc(userDocRef);

@@ -61,7 +61,7 @@ const Client = ({ navigation }) => {
     return () => {
       unsubscribePromise.then(unsubscribe => unsubscribe && unsubscribe());
     };
-  }, [updatedClient, showActiveClients]);
+  }, [updatedClient]);
 
   /**
    * Added PropTypes for navigation
@@ -74,7 +74,7 @@ const Client = ({ navigation }) => {
 
   const filteredClients = showActiveClients
     ? clientData.filter(client => client.isClientActive)
-    : clientData;
+    : clientData.filter(client => !client.isClientActive);
 
   return (
     <SafeAreaView style={styles.container}>

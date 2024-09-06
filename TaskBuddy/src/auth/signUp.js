@@ -2,6 +2,7 @@ import { db } from '../../firebaseConfig.js';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { setDoc, doc, collection } from 'firebase/firestore';
 import { createPersonalProject } from '../FireBaseInteraction/projectInteractions.js';
+import { ABSTRACT_API_KEY } from '../../credentials.jsx'
 
 const auth = getAuth();
 
@@ -18,12 +19,20 @@ const validatePassword = async (password) => {
     return upperCaseTrue && lowerCaseTrue && numberTrue && specialCharTrue; 
 }
 
+
+/**
+ * Create user profile
+ * @param {*} email 
+ * @param {*} password 
+ * @param {*} onChangeLoggedInUser 
+ * @param {*} onError 
+ * @returns 
+ */
 const createUser = async (email, password, onChangeLoggedInUser, onError) => {
   try {
 
     let userCredential;
     const passwordValid = await validatePassword(password);
-    console.log("pw:",passwordValid)
 
     if(passwordValid)
     {
@@ -33,7 +42,6 @@ const createUser = async (email, password, onChangeLoggedInUser, onError) => {
       return;
     }
   
-    
     const user = userCredential.user;
 
     const collRef = collection(db, 'users');
@@ -60,9 +68,11 @@ const createUser = async (email, password, onChangeLoggedInUser, onError) => {
   }
 };
 
+
 export const verifyEmail = async (email) => {
-  const apiKey = "5ee9e31b11dd43789ce69e60b37f13c0";
-  const url = `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${email}`;
+  //This key , the email template , and code pience to make API request is provided by Abstract. 
+  const apiKey = ABSTRACT_API_KEY;
+  const url = `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${email}&aut0_correct=${false}`;
 
   try {
     const response = await fetch(url);
@@ -72,7 +82,6 @@ export const verifyEmail = async (email) => {
     }
 
     const data = await response.json();
-    console.log('Email verification data:', data);
 
     if(data.autocorrect !== "")
     {
@@ -94,7 +103,11 @@ export const verifyEmail = async (email) => {
   }
 };
 
-
+/**
+ * Convert error codes to meaningful messages
+ * @param {*} errorCode 
+ * @returns 
+ */
 const getMessages = (errorCode) => {
     switch (errorCode) {
         case "auth/email-already-in-use":

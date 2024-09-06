@@ -5,7 +5,6 @@ import { height } from "../utility/DimensionsUtility.js";
 import Notification from '../components/Notification.jsx';
 import PropTypes from 'prop-types';
 
-
 const NotificationScreen = ({ navigation }) => {
 
   /**
@@ -17,7 +16,6 @@ const NotificationScreen = ({ navigation }) => {
     }).isRequired,
   };
   
-
   return (
     <SafeAreaView style={styles.container}>
       <Header navigation={navigation} />

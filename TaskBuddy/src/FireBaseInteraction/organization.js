@@ -1,9 +1,13 @@
 import '../../firebaseConfig';
 import { doc, addDoc, onSnapshot, collection, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import * as SecureStore from 'expo-secure-store';
-
 import { db } from '../../firebaseConfig';
 
+/**
+ * This method creates organization
+ * @param {*} organizationData 
+ * @returns 
+ */
 export const createOrganization = async (organizationData) => {
   const uid = await SecureStore.getItemAsync('userID');
   if (!uid) throw new Error("No user ID found in SecureStore");
@@ -19,6 +23,12 @@ export const createOrganization = async (organizationData) => {
   }
 };
 
+/**
+ * This method handles updating organization member list
+ * @param {*} organizationID 
+ * @param {*} userId 
+ * @returns 
+ */
 export const updateOrganizationMember = async (organizationID, userId) => {
   try {
     const organizationDocRef = doc(db, "organizations", organizationID);
@@ -34,7 +44,6 @@ export const updateOrganizationMember = async (organizationID, userId) => {
         await updateDoc(organizationDocRef, {
           members: arrayUnion(userId)
         });
-        console.log("User added to the members array in organization with ID: ", organizationID);
       } else {
         console.log("User is already a member of the organization.");
       }
@@ -51,6 +60,12 @@ export const updateOrganizationMember = async (organizationID, userId) => {
 };
 
 
+/**
+ * this method takes organizationID and updates it with organzationData
+ * @param {*} organizationID 
+ * @param {*} organizationData 
+ * @returns 
+ */
 export const updateOrganization = async (organizationID, organizationData) => {
   try {
     const organizationDocRef = doc(db, "organizations", organizationID);
@@ -62,6 +77,12 @@ export const updateOrganization = async (organizationID, organizationData) => {
   }
 };
 
+
+/**
+ * This method fetch user organizations and passes it to the callback.
+ * @param {*} callback 
+ * @returns 
+ */
 export const getOrganizations = async (callback) => {
   const uid = await SecureStore.getItemAsync('userID');
   if (!uid) throw new Error("No user ID found in SecureStore");
@@ -78,6 +99,13 @@ export const getOrganizations = async (callback) => {
   return unsubscribe;
 };
 
+
+/**
+ * This method fetches a users organiznation details and passes it to the callback.
+ * @param {*} organizations 
+ * @param {*} updateCallback 
+ * @returns 
+ */
 export const getUserOrganizationDetails = async (organizations, updateCallback) => {
   try {
     const orgPromises = organizations.map(async (organizationID) => {
@@ -101,8 +129,6 @@ export const getUserOrganizationDetails = async (organizations, updateCallback) 
           }).filter(client => client !== null);
 
           orgData.clientsDetails = clientsData;
-
-          console.log(`Fetched clients data for organization ID ${organizationID}:`, clientsData);
         }
 
         return orgData;

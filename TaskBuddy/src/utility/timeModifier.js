@@ -1,7 +1,16 @@
+/**
+ * Rounds a datetime string to nearest quarter hour (00, 15, 30, 45 minutes).
+ * If the minutes are >= 45 and round to 00, the hour is incremented by 1.
+ *
+ * @param {string} datetimeString - The input datetime in string format.
+ * @returns {string} - The rounded date in UTC ISO format.
+ */
 export const roundToNearestQuarter = async (datetimeString) => {
   const date = new Date(datetimeString);
-
+  console.log("Date D:",date,datetimeString)
   const minutes = date.getMinutes();
+
+  console.log("minutes",minutes)
 
   let roundedMinutes;
 
@@ -23,16 +32,20 @@ export const roundToNearestQuarter = async (datetimeString) => {
     roundedDate.setHours(roundedDate.getHours() + 1);
   }
 
-
-
   return convertToUTCZ(roundedDate);
 }
 
-
+/**
+ * Converts a localdate to UTC.
+ * Conversion to UTC is necessary before storing dates in Firestore
+ * https://codetofun.com/js/date-methods/gettimezoneoffset/
+ * @param {*} dateTimeStr - input date in local time
+ * @returns 
+ */
 export const convertToUTCZ = (dateTimeStr) => {
   const localDate = new Date(dateTimeStr);
-  
+
   const utcDate = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000) - (60 * 60 * 1000));
-  
+
   return utcDate.toISOString();
 }

@@ -26,7 +26,6 @@ const ProjectUpdateForm = ({ navigation, projectData, setShowSidePanel, setShowD
   const [projectName, setProjectName] = useState(projectDetails.projectName || '');
   const [budget, setBudget] = useState(projectDetails.budget || '');
   const [members, setMembers] = useState(projectDetails.members || []);
-  const [projectId, setProjectId] = useState(projectDetails.project || '');
   const [openColor, setOpenColor] = useState(false);
   const [selectedColor, setSelectedColor] = useState(projectDetails.color || null);
   const [borderColour, setBorderColour] = useState("#ddd");
@@ -88,9 +87,7 @@ const ProjectUpdateForm = ({ navigation, projectData, setShowSidePanel, setShowD
   useEffect(() => {
     const fetchClients = async () => {
         try {
-
           let clients;
-
           if(selectedOrg)
           {
             clients = await new Promise((resolve, reject) => {
@@ -98,16 +95,12 @@ const ProjectUpdateForm = ({ navigation, projectData, setShowSidePanel, setShowD
               resolve(data);
             }, reject);
           });
-          console.log("DV",clients)
 
-          console.log("Clients",clients)        
           const clientItems = clients.map(client => ({ label: client.clientName, value: client.clientId }));
           setClientItems(clientItems);
-          console.log("Complete cli",clientItems)
           if (projectDetails.clientId) {
             setSelectedClient(projectDetails.clientId);
           }
-
           }
           else {
             await fetchUserClients(async(clientList) => {
@@ -142,8 +135,6 @@ const ProjectUpdateForm = ({ navigation, projectData, setShowSidePanel, setShowD
           });
           const memberItems = members.map(member => ({ label: member.memberName, value: member.memberId }));
           setMemberItems(memberItems);
-
-         // setMembers(prevMembers => prevMembers.filter(member => memberItems.some(item => item.value === member)));
         } catch (error) {
           console.error("Error fetching members: ", error);
         }
@@ -180,6 +171,7 @@ const handleSubmit = async () => {
         members: members,
         color: selectedColor,
         projectActive: projectActive,
+        
       };
 
       await updateProject(projectDetails.project, payload, (result) => {
@@ -322,19 +314,22 @@ const handleSubmit = async () => {
             disabled={false}
           />
         </View>
-        <Text style={styles.label}>Start Date*</Text>
+          <View style={{flexDirection:'row'}}>
+            <Text style={styles.label}>Start Date *</Text>
+            <Text style={{color:'blue', marginLeft:'5%'}} onPress={() => setStartDate(null)}>Clear selection</Text>
+          </View>
           <TouchableOpacity onPress={() => showDatePicker('start')}>
             <TextInput
               style={styles.input}
               placeholder="Start Date*"
-              value={startDate.toLocaleDateString()}
+              value={startDate ? startDate.toLocaleDateString() : ''}
               editable={false}
               pointerEvents="none"
             />
           </TouchableOpacity>
           {showStartDatePicker && (
             <DateTimePicker
-              value={startDate}
+              value={startDate || new Date()}
               mode="date"
               display="default"
               onChange={onChangeStartDate}
@@ -355,9 +350,10 @@ const handleSubmit = async () => {
               pointerEvents="none"
             />
           </TouchableOpacity>
-          {showEndDatePicker && (
+          {showEndDatePicker && ( startDate !== null ) && (
             <DateTimePicker
-              value={endDate || new Date()}
+              value={endDate || new Date(startDate)}
+              minimumDate={new Date(startDate)}
               mode="date"
               display="default"
               onChange={onChangeEndDate}
@@ -411,11 +407,11 @@ const handleSubmit = async () => {
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         </View>
         <View style={styles.buttonContainer}>
+          <Button mode="outlined" onPress={handleGoBack} style={styles.button}>
+            Back
+          </Button>
           <Button mode="contained" onPress={handleSubmit} style={styles.button}>
             Update Project
-          </Button>
-          <Button mode="contained" onPress={handleGoBack} style={styles.button}>
-            Back
           </Button>
         </View>
       </View>

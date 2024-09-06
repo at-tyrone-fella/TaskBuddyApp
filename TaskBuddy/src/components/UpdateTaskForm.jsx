@@ -7,7 +7,8 @@ import { getProjectsFromUsers } from '../FireBaseInteraction/projectInteractions
 import { useFocusEffect } from '@react-navigation/native';
 import { roundToNearestQuarter, convertToUTCZ } from '../utility/timeModifier';
 import ImagePickerModal from './ImagePickerModal';
-import { updateTask } from '../FireBaseInteraction/manageTasks';
+import { updateTask, fetchExisitngPayload } from '../FireBaseInteraction/manageTasks';
+import { updateUserTaskList } from '../FireBaseInteraction/userProfile';
 import { width, height} from '../utility/DimensionsUtility';
 import PropTypes from 'prop-types';
 
@@ -31,8 +32,6 @@ const UpdateTaskFormCard = ({ isVisible, onClose, task }) => {
   const [helpVisible, setHelpVisible] = useState(false);
   const [error, setError] = useState('');
 
-  console.log("Project Record",)
-
   const showStartDatePicker = () => setStartDatePickerVisibility(true);
   const hideStartDatePicker = () => setStartDatePickerVisibility(false);
 
@@ -44,7 +43,6 @@ const UpdateTaskFormCard = ({ isVisible, onClose, task }) => {
       setReceipts((prevReceipts) => {
         const receiptsArray = Array.isArray(prevReceipts) ? prevReceipts : [prevReceipts];
         const updatedReceipts = [...receiptsArray, receiptFile];
-        console.log("Updated receipts:", updatedReceipts);
         return updatedReceipts;
       });
     }
@@ -79,6 +77,17 @@ const UpdateTaskFormCard = ({ isVisible, onClose, task }) => {
 
   const handleStartDateEdit = () => {
     setDateEnabled(new Date(startDatetime) > new Date());
+  };
+
+  const comparePayloads = (oldPayload, newPayload) => {
+
+    let returnFlag = false;
+
+    if(oldPayload.startDatetime !== newPayload.startDatetime || oldPayload.endDatetime !== newPayload.endDateTime)
+    {
+      returnFlag = true;
+    }
+    return returnFlag;
   };
 
   const handleEndDateEdit = () => {
@@ -141,10 +150,27 @@ const UpdateTaskFormCard = ({ isVisible, onClose, task }) => {
     }
 
     try {
-      const addTaskStatus = await new Promise((resolve) => {
-        console.log("Task payload:", payload);
-        console.log("Task ID:", task.taskID);
+      const addTaskStatus = await new Promise(async (resolve) => {
+
         updateTask(payload, task.taskID, newExpense, (res) => resolve(res));
+
+        const exisitngData = await fetchExisitngPayload(task.taskID);
+
+        if(comparePayloads(payload, exisitngData))
+        {
+          const updateUserResult = updateUserTaskList({
+              "taskID": task.taskID,
+              "startDatetime": payload.startDatetime,
+              "endDatetime": payload.endDatetime,
+          })
+          if(updateUserResult)
+          {
+            console.log("Task Updated successfully")
+          }
+        }
+        else{
+          console.log("Nothing changed")
+        }
       });
 
       if (addTaskStatus) {
@@ -194,11 +220,10 @@ const renderExpense = (individualExpense, index) => {
 
   const handleImagePicked = () => setIsImagePickerVisible(false);
 
-  if (!isVisible) return null;
+ if (!isVisible) return null;
 
   return (
     <View style={styles.overlay}>
-      <View style={styles.modalContent}>
         <Card style={styles.card}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Update Task</Text>
@@ -305,16 +330,16 @@ const renderExpense = (individualExpense, index) => {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <View style={styles.buttonContainer}>
-              <Button mode="contained" onPress={handleSubmit} style={styles.button}>
-                Submit
-              </Button>
+             
               <Button mode="outlined" onPress={onClose} style={styles.button}>
                 Close
+              </Button>
+               <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+                Submit
               </Button>
             </View>
           </View>
         </Card>
-      </View>
       <ImagePickerModal
         isVisible={isImagePickerVisible}
         onClose={() => setIsImagePickerVisible(false)}
@@ -340,7 +365,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   modalContent: {
-    width: '90%',
+    width: '100%',
     maxWidth: 400,
   },
   modalOverlay: {
@@ -350,7 +375,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)', 
   },
   card: {
-    width: '100%',
+    width: '90%',
     padding: 20,
     borderRadius: 12,
     backgroundColor: '#fff',

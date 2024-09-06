@@ -8,14 +8,13 @@ import PropTypes from 'prop-types';
  * @returns 
  */
 
-const Wrapper = ({ children }) => {
-
+export const Wrapper = ({ children }) => {
     return (
         <SafeAreaView style={styles.safeArea}>
             {children}
         </SafeAreaView>
     );
-}
+};
 
 // Added PropTypes for children
 Wrapper.propTypes = {
@@ -27,5 +26,3 @@ const styles = StyleSheet.create({
         flex: 1,
     },
 });
-
-export default Wrapper;

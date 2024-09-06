@@ -4,9 +4,12 @@ import * as SecureStore from 'expo-secure-store';
 import { db } from '../../firebaseConfig';
 import { updateUserClientProfile } from './userProfile';
 
+/**
+ * Updates client list for a user
+ * @param {JSON} clientData 
+ * @returns 
+ */
 export const createClientUser = async (clientData) => {
-
-  console.log("Creating client user");  
 
   const uid = await SecureStore.getItemAsync('userID');
   if (!uid) throw new Error("No user ID found in SecureStore");
@@ -15,7 +18,6 @@ export const createClientUser = async (clientData) => {
     const collRef = collection(db, "clients");
     const docRef = await addDoc(collRef, clientData);
 
-    console.log("Adding client to user profile");
     updateUserClientProfile({ clients: arrayUnion(docRef.id) });
     return true;
   } catch (e) {
@@ -24,17 +26,18 @@ export const createClientUser = async (clientData) => {
   }
 };
 
+/**
+ * Client created from organization form
+ * @param {JSON} clientData 
+ * @param {function} callback 
+ * @returns 
+ */
 export const createClientOrganization = async (clientData,callback) => {
-
-  console.log("Creating client Organization");  
 
   try {
     const collRef = collection(db, "clients");
     const docRef = await addDoc(collRef, clientData);
-    console.log("Document written with ID: ", docRef.id);
-
     callback(docRef.id);
-
     return true;
   } catch (e) {
     console.error("Error adding document: ", e);
@@ -42,7 +45,12 @@ export const createClientOrganization = async (clientData,callback) => {
   }
 };
 
-
+/**
+ * Fetch Client Details
+ * @param {*} clientID 
+ * @param {*} updateCallback 
+ * @returns 
+ */
 export const getClientDetails = async (clientID, updateCallback) => {
   return new Promise((resolve, reject) => {
     let returnArray = [];
@@ -98,6 +106,11 @@ export const getClientDetails = async (clientID, updateCallback) => {
 };
 
 
+/**
+ * Function to delete a client which was created from an organization screen, but the organization was not created. Such redundant cleints should be deleted.
+ * @param {} clientData 
+ * @returns 
+ */
 export const deleteRedundantClients = (clientData) => {
 
   try{
@@ -113,6 +126,10 @@ export const deleteRedundantClients = (clientData) => {
 
 };
 
+/**
+ * This function fetcher user clients
+ * @param {*} callback 
+ */
 export const fetchUserClients = async (callback) => {
 
   const uid = await SecureStore.getItemAsync('userID');
@@ -121,7 +138,6 @@ export const fetchUserClients = async (callback) => {
 
   onSnapshot(doc(db, "users", uid), (doc) => {
     if(doc.exists()) {
-      console.log("FetchClient",doc.data().clients);
       callback(doc.data().clients);
     } else {
       callback([]);
@@ -131,10 +147,13 @@ export const fetchUserClients = async (callback) => {
 
 };
 
+/**
+ * This function fetches userClientProfiles
+ * @param {*} clientList 
+ * @param {*} callback 
+ * @returns 
+ */
 export const getUserClientProfileDetails = async (clientList,callback) => {
-
-
-
   let returnArray = [];
 
   let remaining = clientList.length;
@@ -177,6 +196,12 @@ export const getUserClientProfileDetails = async (clientList,callback) => {
 
 };
 
+/**
+ * This function fetches user Client Profiles
+ * @param {*} clientList 
+ * @param {*} callback 
+ * @returns 
+ */
 export const getUserClientProfiles = async (clientList,callback) => {
   let returnArray = [];
   let unsubscribeFunctions = [];
@@ -220,7 +245,12 @@ export const getUserClientProfiles = async (clientList,callback) => {
   };
 };
 
-
+/**
+ * This method updates client details
+ * @param {*} clientID 
+ * @param {*} clientData 
+ * @returns 
+ */
 export const updateClientDetails = async (clientID, clientData) => {
     try {
       const docRef = doc(db, "clients", clientID);

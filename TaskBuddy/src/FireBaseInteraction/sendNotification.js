@@ -3,7 +3,7 @@ import { STATUS_VALUES } from "./manageInvitation";
 
 
 /**
- * This method sends payload message to create anew invitation to the invitations collections.
+ * This method sends payload message to create a new invitation to the invitations collections.
  * It returns a list of failed invitations that were not created for some users.
  * @param {*} memberList - Member list to send invitation.
  * @param {*} orgName - Organization Name for invitation.

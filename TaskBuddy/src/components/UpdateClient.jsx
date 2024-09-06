@@ -9,8 +9,6 @@ import PropTypes from 'prop-types';
 
 const UpdateClient = ({ setShowUpdateClientForm, client, setUpdatedClient }) => {
 
-    console.log("isClientActive",client.isClientActive);
-
     const [clientName, setClientName] = useState(client.clientName || "");
     const [clientBusinessNumber, setClientBusinessNumber] = useState(client.clientBusinessNumber || "");
     const [clientContactNumber, setClientContactNumber] = useState(client.clientContactNumber || "");
@@ -71,7 +69,7 @@ const UpdateClient = ({ setShowUpdateClientForm, client, setUpdatedClient }) => 
                     style={[styles.input, !edit && styles.disabledInput]}
                     value={clientName}
                     onChangeText={setClientName}
-                    editable={edit}
+                    editable={false}
                 />
 
                 <Text style={styles.label}>Client Business Number</Text>

@@ -7,29 +7,33 @@ import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { fetchTasks, getTaskHoursForDay } from '../../FireBaseInteraction/manageTasks'; 
 import { setupUserProfileListener } from '../../FireBaseInteraction/userProfile';
+import { calculateHourlyProportions, getBoxStyle } from '../../ApplicationLayer/calendargridLogic';  
 import { width, height } from '../../utility/DimensionsUtility';
 import PropTypes from 'prop-types';
 
 const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setShowTaskModal, setReturnDateTime, setShowUpdateTaskModal, setUpdateTask }) => {
+  
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
   const [tasks, setTasks] = useState([]);
   const [taskHours, setTaskHours] = useState([]);
   const [triggerPoint, setTriggerPoint] = useState(0);
   const [helpVisible, setHelpVisible] = useState(false);
-  const hourScrollViewRef = useRef(null);  
   const scrollViewRef = useRef(null);
 
+  /**
+   * This useEffect fetches and stores all task details for selected date
+   */
   useEffect(() => {
     const getTasksForDate = async (date) => {
       try {
         const tasksForDay = await fetchTasks(date);
-        console.log("ftd",tasksForDay)
         const tasksWithDisplayDetails = await Promise.all(tasksForDay.map(async (task) => {
           const taskDisplayDetails = await getTaskHoursForDay(task.repStartDateTime, task.repEndDateTime, date);
           return { ...task, ...taskDisplayDetails };
         }));
-        setTasks(tasksWithDisplayDetails);
-        console.log("twdd", tasksWithDisplayDetails);
+        const promiseReturned = await Promise.all(tasksWithDisplayDetails);
+        
+        setTasks(promiseReturned);
       } catch (error) {
         console.error("Error fetching tasks:", error);
       }
@@ -38,11 +42,16 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
     getTasksForDate(selectedDate);
   }, [selectedDate, triggerPoint]);
 
+  /**
+   * This useEffect each tasks hourly proportions and sets the taskID, its proportions and the direction.
+   * Proportion is the portion of the hour occupied
+   * Direction is the 
+   */
   useEffect(() => {
     const calcTaskHourProportions = async () => {
       const tasksPromise = await Promise.all(
         tasks.map(async (task) => {
-          const { taskID, proportions, directions } = await calculateHourlyProportions(task.repStartDateTime, task.repEndDateTime, task.taskID);
+          const { taskID, proportions, directions } = await calculateHourlyProportions(task.startTime, task.endTime, task.taskID);
           return { taskID, proportions, directions };
         })
       );
@@ -72,63 +81,6 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
     };
   }, []);
 
-  const calculateHourlyProportions = async (startTimestamp, endTimestamp, taskID) => {
-    const start = moment(startTimestamp);
-    const end = moment(endTimestamp);
-
-    if (!start.isValid() || !end.isValid() || end.isBefore(start)) {
-      throw new Error('Invalid timestamps');
-    }
-
-    const proportions = {};
-    const directions = {}; 
-
-    let currentHour = start.clone().startOf('hour');
-    const endHour = end.clone().startOf('hour');
-
-    while (currentHour <= endHour) {
-      const hourStart = currentHour.clone();
-      const hourEnd = currentHour.clone().endOf('hour');
-
-      let proportion = 0;
-      let direction = '';
-
-      if (start.isSameOrBefore(hourStart) && end.isSameOrAfter(hourEnd)) {
-        proportion = 1;
-        direction = 'full'; 
-      } else if (start.isSameOrAfter(hourStart) && end.isSameOrBefore(hourEnd)) {
-        const minutes = end.diff(start, 'minutes');
-        proportion = minutes / 60;
-        direction = 'middle';     
-      } else if (start.isBetween(hourStart, hourEnd, null, '[)')) {
-        const minutes = hourEnd.diff(start, 'minutes');
-        proportion = minutes / 60;
-        direction = 'end'; 
-      } else if (end.isBetween(hourStart, hourEnd, null, '(]')) {
-        const minutes = end.diff(hourStart, 'minutes');
-        proportion = minutes / 60;
-        direction = 'start';
-      }
-
-      if (proportion > 0 && proportion <= 0.25) {
-        proportion = 0.25;
-      } else if (proportion > 0.25 && proportion <= 0.5) {
-        proportion = 0.5;
-      } else if (proportion > 0.5 && proportion <= 0.75) {
-        proportion = 0.75;
-      } else if (proportion > 0.75 && proportion <= 1) {
-        proportion = 1;
-      }
-
-      proportions[currentHour.format('H')] = proportion;
-      directions[currentHour.format('H')] = direction; 
-
-      currentHour.add(1, 'hour');
-    }
-
-    return { taskID, proportions, directions };
-  };
-
   const onChange = (event, date) => {
     if (date) {
       setCalendarState(false);
@@ -144,14 +96,25 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
     setHelpVisible(false);
   };
 
+  /**
+   * Fixes colour of calendar in the header.
+   */
   useEffect(() => {
     if (!calendarState) {
       setCalendarColour('#D3D3D3');
     } 
   }, [calendarState]);
 
+  /**
+   * Creating an array of hours.
+   */
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
+  /**
+   * 
+   * @param {*} numDays 
+   * @returns 
+   */
   const getDates = (numDays) => {
     const today = selectedDate ? moment(selectedDate) : moment();
     return Array.from({ length: numDays * 2 + 1 }, (_, i) =>
@@ -174,40 +137,8 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
     }
   }, [numDays]);
 
-  useEffect(() => {
-    if (hourScrollViewRef.current) {
-      const currentHour = moment().hour();
-      hourScrollViewRef.current.scrollTo({
-        y: currentHour * 50,
-        animated: true
-      });
-    }
-  }, []);
-
-  const getBoxStyle = (proportion, direction, numTasks) => {
-    const boxHeight = 49 * proportion; 
-    const boxWidth = `${100 / numTasks}%`; 
-
-    let marginTop = 0;
-    let marginBottom = 0;
-    let marginVertical = 0;
-    let returnStyle = { width: boxWidth }; 
-
-    if (direction === 'end') {
-      marginTop = 50 * (1 - proportion);
-      returnStyle = { ...returnStyle, height: boxHeight, marginTop: marginTop };
-    } else if (direction === 'middle') {
-      marginVertical = (50 - boxHeight) / 2; 
-      returnStyle = { ...returnStyle, height: boxHeight, marginVertical: marginVertical };
-    } else if (direction === 'start') {
-      marginBottom = 50 * (1 - proportion); 
-      returnStyle = { ...returnStyle, height: boxHeight, marginBottom: marginBottom };
-    }
-
-    return returnStyle;
-  };
-
   const renderHourCell = (hour) => {
+    
     const proportionsForHour = taskHours.flatMap(task =>
       task.proportions[hour] ? { taskID: task.taskID, proportion: task.proportions[hour], directions: task.directions[hour] } : []
     );
@@ -219,7 +150,7 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
 
     const fetchTaskColour = (taskID) => {
       const task = tasks.find(task => task.taskID === taskID);
-      return task ? task.color : '#32CD32';
+      return task ? task.taskColor : '#32CD32';
     };
 
     const handleLongPress = (taskID) => {
@@ -228,10 +159,15 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
       setShowUpdateTaskModal(true);
     };
 
+    const handleHourLongPress = () => {
+        setShowTaskModal(true);
+      
+    }
+
     const numTasks = proportionsForHour.length;
 
     return (
-      <TouchableOpacity onLongPress={() => setShowTaskModal(true)} delayLongPress={500}>
+      <TouchableOpacity onLongPress={() => handleHourLongPress()} delayLongPress={500}>
         <View style={styles.hourRow}>
           <Text style={styles.hourText}>{`${hour}:00`}</Text>
           <View style={styles.proportionContainer}>
@@ -244,7 +180,7 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
                   style={[styles.proportionBox, { backgroundColor: taskBackgroundColour || 'green' }, boxStyle]}
                   onLongPress={() => handleLongPress(taskID)} 
                 >
-                  <Text style={styles.proportionText} numberOfLines={1} ellipsizeMode="tail">
+                  <Text style={styles.proportionText}>
                     {fetchTaskName(taskID)}
                   </Text>
                 </TouchableOpacity>
@@ -329,7 +265,6 @@ const CalendarGrid = ({ calendarState, setCalendarState, setCalendarColour, setS
         vertical
         style={styles.hourContainer} 
         showsVerticalScrollIndicator={true}
-        ref={hourScrollViewRef}
       >
         {hours.map(hour => renderHourCell(hour))}
       </ScrollView>
@@ -459,7 +394,7 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: height * 0.02,
     textAlign: 'center',
   },
 });

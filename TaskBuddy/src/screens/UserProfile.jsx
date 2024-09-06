@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, SafeAreaView, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Modal as RNModal } from "react-native";
+import { useFocusEffect } from '@react-navigation/native';
 import { Button, IconButton } from 'react-native-paper';
 import Header from "../components/Header.jsx";
 import { FontPreferences } from "../utility/FontPreferences.js";
@@ -28,6 +29,7 @@ const UserProfile = ({ navigation }) => {
   const [extension, setExtension] = useState('US');
   const [timezone, setTimezone] = useState('');
   const [userNameError, setUserNameError] = useState('');
+  const [userNameErrorColor, setUserNameErrorColor] = useState('');
   const [address, setAddress] = useState('');
   const [preferredCurrency, setPreferredCurrency] = useState('');
   const [email, setEmail] = useState(emailId);
@@ -38,40 +40,89 @@ const UserProfile = ({ navigation }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [errorColour, setErrorColour] = useState('red');
   const [helpVisible, setHelpVisible] = useState(false);
+  const [submit, setSubmit] = useState(true);
+
+    const fetchUserProfile = async () => {
+    try {
+      const unsubscribe = await getUserProfiles(
+        (userProfile) => {
+          if (userProfile) {
+            setUserProfileData(userProfile);
+            setCountry(userProfile.country || '');
+            setUsername(userProfile.username || '');
+            setExistingUserName(userProfile.username || '');
+            setFirstName(userProfile.firstName || '');
+            setLastName(userProfile.lastName || '');
+            setGender(userProfile.gender || '');
+            setDob(userProfile.dob ? new Date(userProfile.dob) : new Date());
+            setContactNumber(userProfile.contactNumber || '');
+            setExtension(userProfile.extension || 'US');
+            setTimezone(userProfile.timezone || '');
+            setAddress(userProfile.address || '');
+            setPreferredCurrency(userProfile.preferredCurrency || '');
+            setEmail(userProfile.email || emailId);
+          }
+        }
+      );
+      return unsubscribe;
+    } catch (error) {
+      console.log('Error fetching user profile: ', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const unsubscribe = await getUserProfiles(
-          (userProfile) => {
-            if (userProfile) {
-              setUserProfileData(userProfile);
-              setCountry(userProfile.country || '');
-              setUsername(userProfile.username || '');
-              setExistingUserName(userProfile.username || '');
-              setFirstName(userProfile.firstName || '');
-              setLastName(userProfile.lastName || '');
-              setGender(userProfile.gender || '');
-              setDob(userProfile.dob ? new Date(userProfile.dob) : new Date());
-              setContactNumber(userProfile.contactNumber || '');
-              setExtension(userProfile.extension || 'US');
-              setTimezone(userProfile.timezone || '');
-              setAddress(userProfile.address || '');
-              setPreferredCurrency(userProfile.preferredCurrency || '');
-              setEmail(userProfile.email || emailId);
-            }
-          }
-        );
-        return unsubscribe;
-      } catch (error) {
-        console.log('Error fetching user profile: ', error);
-      }
-    };
-
-    fetchUserProfile().then(() => {
+     fetchUserProfile().then(() => {
       setISComponentMounted(true);
     });
+     
   }, []);
+
+  const resetState = () => {
+  setCountry('');
+  setUsername('');
+  setFirstName('');
+  setLastName('');
+  setGender('');
+  setDob(new Date());
+  setContactNumber('');
+  setExtension('US');
+  setTimezone('');
+  setUserNameError('');
+  setAddress('');
+  setPreferredCurrency('');
+  setErrorMessage('');
+  setEdit(false);
+  setShowDetails(false);
+  setErrorColour('red');
+  setSubmit(false);
+};
+
+ const resetErrState = () => {
+  setUserNameError('');
+  setErrorMessage('');
+  setEdit(false);
+  setShowDetails(false);
+  setErrorColour('red');
+  setSubmit(false);
+};
+
+useEffect(
+  () => {
+    if(username)
+    {
+      setSubmit(true);
+    }
+  }
+,[username]);
+
+useFocusEffect(
+  React.useCallback(() => {
+    resetState();
+
+    
+  }, [])
+);
+
 
   const onSubmit = async () => {
     if (username !== '' && email !== '' && firstName !== '') {
@@ -139,16 +190,18 @@ const UserProfile = ({ navigation }) => {
     setShowDatePicker(true);
   };
 
-  const handleUserName = (username) => {  
+  const handleUserName = (username) => { 
     if(username !== existingUserName) {  
       checkUniqueUserName(username, (isUnique) => {
         if (isUnique) {
+          setSubmit(false);
+          setUserNameErrorColor('red');
           setUserNameError('This username is already taken. Please choose another one.');
-          setErrorColour('red');
           setUsername('')
         } else {
-          setErrorColour('red');
+          setUserNameErrorColor('green');
           setUserNameError('Username is available.');
+          setSubmit(true);
         }
       });
     }
@@ -174,11 +227,18 @@ const UserProfile = ({ navigation }) => {
       <Header navigation={navigation} />
       <View style={styles.editContainer}>
         {!edit ? (
-          <TouchableOpacity style={styles.editProfile} onPress={() => setEdit(true)}>
+          <TouchableOpacity style={styles.editProfile} onPress={() => {
+            setEdit(true);
+          }
+          }>
             <Text style={{ color: 'white' }}>Edit Profile</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.viewProfile} onPress={() => setEdit(false)}>
+          <TouchableOpacity style={styles.viewProfile} onPress={() => {
+            setEdit(false);
+            resetErrState();
+            fetchUserProfile();
+            }}>
             <Text style={{ color: 'white' }}>View Profile</Text>
           </TouchableOpacity>
         )}
@@ -225,7 +285,10 @@ const UserProfile = ({ navigation }) => {
             style={[styles.usernameInput]}
             placeholder="Username"
             value={username}
-            onChangeText={setUsername}
+            onChangeText={(newUserName) => {
+              setUsername(newUserName);
+              setSubmit(false);
+            }}
             editable={edit}
           />
           {edit && (
@@ -239,7 +302,7 @@ const UserProfile = ({ navigation }) => {
           )}
         </View>
         {isComponentMounted && edit && (
-          <Text style={styles.errorText}>{userNameError}</Text>
+          <Text style={[styles.errorText, {color: userNameErrorColor}]}>{userNameError}</Text>
         )}
             <Text style={styles.legend}>First Name *</Text>
             <TextInput
@@ -398,7 +461,7 @@ const UserProfile = ({ navigation }) => {
         )}
         <Text style={[styles.errorText,{color:errorColour}]}>{errorMessage}</Text>
         {edit && (
-          <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
+          <TouchableOpacity style={[styles.submitButton, !submit && styles.disabledButton]} onPress={onSubmit} disabled={!submit}>
             <Text style={{ color: 'white' }}>Submit</Text>
           </TouchableOpacity>
         )}
@@ -423,6 +486,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     padding: 10,
     borderRadius: 5,
+  },
+  disabledButton:{
+    backgroundColor: 'grey',
+    padding: width * 0.02,
+    borderRadius: 50,
+    marginTop: height * 0.006,
+    alignItems: 'center',
   },
   editProfile: {
     marginRight: 10,

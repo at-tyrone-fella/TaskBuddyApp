@@ -4,23 +4,18 @@ import { onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { width } from '../utility/DimensionsUtility';
 import * as SecureStore from 'expo-secure-store';
-import { updateOrganizationMember } from '../FireBaseInteraction/organization';
-import { addOrganizationToUser, deleteInvitationFromUser } from '../FireBaseInteraction/userProfile';
-import { updateInvitationStatus, STATUS_VALUES, refreshNotificationList } from '../FireBaseInteraction/manageInvitation';
+import { handleAccept, handleDeny } from '../ApplicationLayer/notificationLogic';  
 
-/**
- * This component loads and manages notifications.
- * Bug 1.1 : Identified a bug with re- rendering of the Notification List upon acceptance.
- * This bug becomes particularly irritating for user interface if its the last notification that is accepted.
- * It works fine with deny. This will be fixed in future releases.
- */
 const Notification = () => {
+
   const [invitations, setInvitations] = useState([]);
   const [uid, setUid] = useState(null);
   const [lockRefresh, setLockRefresh] = useState(false);
   const isUpdating = useRef(false);
 
-  // Fetch the UID once on component mount
+  /**
+   * Fetch uid from Secure Store
+   */
   useEffect(() => {
     const fetchUid = async () => {
       const userId = await SecureStore.getItemAsync("userID");
@@ -29,8 +24,11 @@ const Notification = () => {
     fetchUid();
   }, []);
 
+  /**
+   * onSnapshot listening for changes to user doc and updating inviation list
+   */
   useEffect(() => {
-    if (!uid || isUpdating.current) return; // Dont reload if an update is in progress
+    if (!uid || isUpdating.current) return;
 
     const userDocRef = doc(db, "users", uid);
 
@@ -60,69 +58,12 @@ const Notification = () => {
     return () => unsubscribe();
   }, [uid]);
 
-const handleAccept = async (invitationId) => {
-  isUpdating.current = true;
-  try {
-    console.log("Invitation ID: ", invitationId);
+  const handleAcceptInvitation = (invitationId) => {
+    handleAccept(invitationId, invitations, uid, setInvitations, setLockRefresh, isUpdating, lockRefresh);
+  };
 
-    const invitationClicked = invitations.find((invitation) => invitation.id === invitationId);
-
-    if (!invitationClicked) {
-      throw new Error("Invitation not found");
-    }
-
-    const result1 = await updateOrganizationMember(invitationClicked.data.orgId, invitationClicked.data.userId);
-    const result2 = await addOrganizationToUser(invitationClicked.data.orgId, invitationClicked.data.userId);
-    const result3 = await updateInvitationStatus(invitationId, STATUS_VALUES.ACCEPTED);
-    const result4 = await deleteInvitationFromUser(invitationId, invitationClicked.data.userId, setLockRefresh);
-
-    console.log(result1,result2,result3,result4);
-
-    if(result1 && result2 && result3 && result4)
-    {
-      Alert.alert("Accepted !!","You have accepted invitation.",
-        [
-          { text:"OK" }
-        ]
-      );
-    } else {
-      Alert.alert("Rejected !!","You have denied invitation.",
-              [
-                { text:"OK" }
-              ]
-            );
-    }
-   
-    if(!lockRefresh)
-    {
-    const newInvitationList = await refreshNotificationList(uid);
-    setInvitations(newInvitationList);
-    }
-  } catch (error) {
-    console.error("Error handling accept:", error);
-  } finally {
-    isUpdating.current = false;
-  }
-};
-
-
-  const handleDeny = async (invitationId) => {
-    isUpdating.current = true;
-    try {
-      const invitationClicked = invitations.find((invitation) => invitation.id === invitationId);
-
-      await Promise.all([
-        updateInvitationStatus(invitationId, STATUS_VALUES.DENIED),
-        deleteInvitationFromUser(invitationId, invitationClicked.data.userId, setLockRefresh),
-      ]);
-
-      const newInvitationList = await refreshNotificationList(uid);
-      setInvitations(newInvitationList);
-    } catch (error) {
-      console.error("Error handling deny:", error);
-    } finally {
-      isUpdating.current = false;
-    }
+  const handleDenyInvitation = (invitationId) => {
+    handleDeny(invitationId, invitations, uid, setInvitations, setLockRefresh, isUpdating);
   };
 
   return (
@@ -134,10 +75,10 @@ const handleAccept = async (invitationId) => {
             <Text style={styles.title}>{invitation.notification?.title || "No Title"}</Text>
             <Text style={styles.body}>{invitation.notification?.body || "No Body"}</Text>
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.buttonAccept} onPress={() => handleAccept(invitation.id)}>
+              <TouchableOpacity style={styles.buttonAccept} onPress={() => handleAcceptInvitation(invitation.id)}>
                 <Text style={styles.buttonText}>Accept</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.buttonDeny} onPress={() => handleDeny(invitation.id)}>
+              <TouchableOpacity style={styles.buttonDeny} onPress={() => handleDenyInvitation(invitation.id)}>
                 <Text style={styles.buttonText}>Deny</Text>
               </TouchableOpacity>
             </View>

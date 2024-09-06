@@ -95,7 +95,10 @@ const HomePage = ({ navigation }) => {
                 To use this application effectively, please choose a unique user name.
                 Go to <TouchableOpacity onPress={() => {navigation.navigate('UserProfile')}}><Text style={{color:'blue'}}>"My Profile"</Text></TouchableOpacity> section and edit your profile to add a username.
               </Text>
-              <Button mode="contained" onPress={hideUserProfileAlert}>OK</Button>
+              <View style ={{flexDirection:'row'}}>
+                <Button mode="outlined" onPress={hideUserProfileAlert} style={{ marginRight: 10 }}>Back</Button>
+                <Button mode="contained" onPress={() => {navigation.navigate('UserProfile')}} style={{ marginLeft: 10 }}>OK</Button>
+              </View>
             </View>
           </View>
         </Modal>

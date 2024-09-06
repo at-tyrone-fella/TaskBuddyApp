@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, StyleSheet } from "react-native";
 import { Card, Button } from "react-native-paper";
 import { width, height } from "../utility/DimensionsUtility";
 import { FontPreferences } from "../utility/FontPreferences";
 import CountryPicker from "react-native-country-picker-modal";
-import { createClientUser, createClientOrganization } from "../FireBaseInteraction/client";
+import { createClient } from '../ApplicationLayer/createClientLogic';  
 import PropTypes from 'prop-types';
 
 const CreateClient = ({ navigation, screenName, setClientCreationID, setShowCreateClientForm }) => {
@@ -16,50 +16,28 @@ const CreateClient = ({ navigation, screenName, setClientCreationID, setShowCrea
     const [clientLocation, setClientLocation] = useState(null);
     const [error, setError] = useState("");
 
-    const createClient = () => {
-        if (clientName === "" || clientContactNumber === "" || clientEmail === "" ) {
-            setError("Please fill in all required fields.");
-            return;
+const handleCreateClient = async () => {
+        const clientData = {
+            clientName,
+            clientBusinessNumber,
+            clientContactNumber,
+            clientAddress,
+            clientEmail,
+            clientLocation
+        };
+
+        const errorMessage = await createClient(
+            clientData,
+            screenName,
+            setClientCreationID,
+            setShowCreateClientForm
+        );
+
+        if (errorMessage) {
+            setError(errorMessage);
         } else {
-            const clientSetupData = {
-                clientName: clientName,
-                clientBusinessNumber: clientBusinessNumber,
-                clientContactNumber: clientContactNumber,
-                clientAddress: clientAddress,
-                clientEmail: clientEmail,
-                clientLocation: clientLocation,
-                isClientActive: true
-            };
-
-            if (screenName === "SetupOrganization") {
-                createClientOrganization(clientSetupData, async (clientCreationID) => {
-                    setClientCreationID(clientCreationID);
-                    setShowCreateClientForm(false);
-                });
-            } else {
-                
-                const taskStatus = createClientUser(clientSetupData);
-                if(taskStatus)
-                {
-                    Alert.alert('Client created successfully !', 'New client created.',[{
-                        title: 'Ok',
-                        onPress: () => {
-                            setShowCreateClientForm(false);
-                        }
-                    }]);
-                }else{
-                     Alert.alert('Client could not be created !', 'Cannot create client at the moment',[{
-                        title: 'Ok',
-                        onPress: () => {
-                        }
-                    }]);
-                }
-
-
-              
-            }
+            setError("");
         }
-        setError("");
     };
 
     /**
@@ -137,7 +115,7 @@ const CreateClient = ({ navigation, screenName, setClientCreationID, setShowCrea
                 <View style={styles.buttonContainer}>
                     <Button
                         mode="contained"
-                        onPress={createClient}
+                        onPress={handleCreateClient}
                         style={styles.button}
                     >
                         Create Client

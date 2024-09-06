@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Button, Image, StyleSheet, Platform, Text, Alert, TouchableOpacity } from 'react-native';
+import { View, Image, StyleSheet, Platform, Text, Alert, TouchableOpacity } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { ActivityIndicator } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
@@ -62,14 +62,13 @@ const ImagePickerModal = ({ isVisible, onClose, setReceiptFile }) => {
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
         quality: 1,
       });
     } else if (source === 'gallery') {
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
+        aspect: [1,1],
         quality: 1,
       });
     } else if (source === 'document') {
@@ -136,8 +135,8 @@ const ImagePickerModal = ({ isVisible, onClose, setReceiptFile }) => {
       <View style={styles.modalContent}>
         <Text style={styles.headerText}>Select File</Text>
         {
-          loading ? (          <ActivityIndicator animating={loading} size="large" color="#0000ff" />
-) : (<>
+          loading ? (<ActivityIndicator animating={loading} size="large" color="#0000ff" /> ) : (
+      <>
         <View style={styles.linkContainer}>
           <TouchableOpacity onPress={() => handleFilePick('camera')} style={styles.link}>
             <Text style={styles.linkText}>Take Photo</Text>
@@ -159,11 +158,12 @@ const ImagePickerModal = ({ isVisible, onClose, setReceiptFile }) => {
 </>)
         }
                 <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={handleUpload} style={[styles.button, styles.uploadButton]}>
-            <Text style={styles.buttonText}>Upload</Text>
-          </TouchableOpacity>
+         
           <TouchableOpacity onPress={onClose} style={[styles.button, styles.cancelButton]}>
             <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+           <TouchableOpacity onPress={handleUpload} style={[styles.button, styles.uploadButton]}>
+            <Text style={styles.buttonText}>Upload</Text>
           </TouchableOpacity>
         </View>
       </View>

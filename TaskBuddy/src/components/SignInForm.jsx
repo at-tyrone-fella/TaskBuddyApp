@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 const SignInForm = ({ navigation }) => {
 
     const [email, setEmail] = useState("at56725111998@gmail.com");
-    const [password, setPassword] = useState("Pawg@1000");
+    const [password, setPassword] = useState("at567@A");
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(true);
 
@@ -27,7 +27,7 @@ const SignInForm = ({ navigation }) => {
         } else {
             setError("");
             SignInUser(email, password, login,
-                () => {
+                async () => {
                     navigation.navigate('HomePage');
                 },
                 (errorMessage) => {

@@ -5,8 +5,18 @@ import { db } from '../../firebaseConfig';
 import { updateOrganization } from './organization';
 import { updateUserProjectProfile } from './userProfile';
 
+/**
+ * Default project name which tracks personal tasks of user
+ */
 const DEFAULT_PROJECT_NAME = "%_Personal_Project_%";
 
+
+/**
+ * This method updates a project with payload and return feedback through callback
+ * @param {*} projectId 
+ * @param {*} payLoad 
+ * @param {*} callback 
+ */
 export const updateProject = async ( projectId , payLoad, callback) => {
   try{
     const projectDoc = doc(db, "projects", projectId);
@@ -18,16 +28,18 @@ export const updateProject = async ( projectId , payLoad, callback) => {
   }
 };
 
+
+/**
+ * This method fetched default project id for the user
+ * @returns 
+ */
 export const getDefaultProjectId = async () => {
   try {
     const uid = await SecureStore.getItemAsync('userID');
     if (!uid) throw new Error("No user ID found in SecureStore");
-
     let returnId;
-
     const userDocRef = doc(db, "users", uid);
     const userDocSnap = await getDoc(userDocRef);
-
     if (userDocSnap.exists()) {
       const projectList = userDocSnap.data().projects;
       for (const project of projectList) {
@@ -50,6 +62,12 @@ export const getDefaultProjectId = async () => {
   }
 };
 
+/**
+ * This method updates project by adding taskID
+ * @param {*} projectId 
+ * @param {*} taskID 
+ * @param {*} callback 
+ */
 export const updateProjectNewTask = async (projectId, taskID, callback) => {
   try {
     const projectDoc = doc(db, "projects", projectId);
@@ -63,6 +81,11 @@ export const updateProjectNewTask = async (projectId, taskID, callback) => {
   }
 };
 
+
+/**
+ * This method fetches and returns project details of a user
+ * @param {*} callback 
+ */
 export const getProjectsFromUsers = async (callback) => {
   try {
     const uid = await SecureStore.getItemAsync('userID');
@@ -81,9 +104,7 @@ export const getProjectsFromUsers = async (callback) => {
         const projectRef = doc(db, "projects", project);
         const projectDoc = await getDoc(projectRef);
         if (projectDoc.exists() && projectDoc.data().projectName !== DEFAULT_PROJECT_NAME) {
-
-          returnProjectData.push({ project, ...projectDoc.data()});
-          
+          returnProjectData.push({ project, ...projectDoc.data()});  
         }
       }
       callback(returnProjectData);
@@ -97,13 +118,17 @@ export const getProjectsFromUsers = async (callback) => {
   }
 };
 
+
+/**
+ * This method fetches orgID and organizationName and returns.
+ * @param {*} callback 
+ * @returns 
+ */
 export const getOrganizations = async (callback) => {
   try {
     const uid = await SecureStore.getItemAsync('userID');
     if (!uid) throw new Error("No user ID found in SecureStore");
-
     const userDocRef = doc(db, "users", uid);
-
     const unsubscribe = onSnapshot(userDocRef, async (docSnapshot) => {
       if (docSnapshot.exists()) {
         const orgArray = docSnapshot.data().organizations || [];
@@ -118,7 +143,6 @@ export const getOrganizations = async (callback) => {
               return null;
             }
           });
-
           const orgData = await Promise.all(orgPromises);
           const filteredOrgData = orgData.filter(org => org !== null);
           callback(filteredOrgData);
@@ -138,6 +162,12 @@ export const getOrganizations = async (callback) => {
   }
 };
 
+
+/**
+ * This method fetches organization members and passes it to callback.
+ * @param {*} organizationId 
+ * @param {*} callback 
+ */
 export const getOrganizationMembers = async (organizationId, callback) => {
     try {
         const organizationDocRef = doc(db, "organizations", organizationId);
@@ -179,6 +209,12 @@ export const getOrganizationMembers = async (organizationId, callback) => {
     }
 };
 
+
+/**
+ * This method fetches and returns clientID and clientName for an organization.
+ * @param {*} organizationId 
+ * @param {*} callback 
+ */
 export const getClients = async (organizationId, callback) => {
   try {
     const organizationDocRef = doc(db, "organizations", organizationId);
@@ -220,14 +256,14 @@ export const getClients = async (organizationId, callback) => {
   }
 };
 
-
-
+/**
+ * This method creates a project from payload
+ */
 export const createProject = async (payLoad) => {
     try{
         const projectRef = collection(db, "projects");
         const docRef =  await addDoc(projectRef, payLoad);
         await updateOrganization(payLoad.orgId, {projects: arrayUnion(docRef.id)});
-
         payLoad.members.forEach(async (member) => {
             await updateUserProjectProfile(docRef.id, member);
         });
@@ -239,10 +275,14 @@ export const createProject = async (payLoad) => {
   }
 };
 
+/**
+ * This method create Personal project for a user
+ * @param {*} payLoad 
+ * @param {*} uniqueId 
+ * @returns 
+ */
 export const createPersonalProject = async (payLoad,uniqueId) => {
-
   let uid;
-
   if(uniqueId === undefined){
   uid = await SecureStore.getItemAsync('userID');
   if (!uid) throw new Error("No user ID found in SecureStore");
@@ -261,6 +301,13 @@ export const createPersonalProject = async (payLoad,uniqueId) => {
   }
 };
 
+
+/**
+ * This method fetches and returns projectID, projectName for an organization
+ * @param {*} projectName 
+ * @param {*} orgId 
+ * @param {*} callback 
+ */
 export const checkProjectNames = async (projectName, orgId, callback) => {
   let returnArray = [];
 
@@ -274,7 +321,6 @@ export const checkProjectNames = async (projectName, orgId, callback) => {
       const projectDoc = await getDoc(projectRef);
 
       if (projectDoc.data().projectName === projectName) {
-        console.log(projectDoc.data().projectName);
         return { docId: project, projectName: projectDoc.data().projectName };
       } else {
         return null;

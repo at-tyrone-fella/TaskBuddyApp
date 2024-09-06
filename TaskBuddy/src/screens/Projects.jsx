@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, Switch } from "react-native";
 import { Button } from "react-native-paper";
 import Header from "../components/Header.jsx";
@@ -38,6 +38,9 @@ const Projects = ({ navigation }) => {
     setIsPersonal(true);
   };
 
+  /**
+   * Fetch user projects and store projectid, project name and color
+   */
   useFocusEffect(
     useCallback(() => {
       const fetchUserProjects = async () => {
@@ -89,6 +92,7 @@ const Projects = ({ navigation }) => {
     setShowDetails(true);
   };
 
+  //Render project names
   const renderProjectNames = (projectRecord) => {
     return (
       <View style={[styles.projectContainer,{marginBottom:20}]} key={projectRecord.project}>
@@ -101,10 +105,9 @@ const Projects = ({ navigation }) => {
     );
   };
 
+  //Filter active projects
   const filteredProjects = showActiveProjects ? projectDetails.filter((project) => project.projectActive === true) : projectDetails;
   
-  console.log("Filtered", filteredProjects);
-
   Projects.propTypes = {
     navigation: PropTypes.shape({
       navigate: PropTypes.func.isRequired,
@@ -131,7 +134,7 @@ const Projects = ({ navigation }) => {
               <View style={styles.sideContainer}>
                 <Text style={styles.sideTitle}>My Projects</Text>
                 <View style={styles.toggleContainer}>
-                  <Text style={styles.toggleLabel}>Active Projects</Text>
+                  <Text style={[styles.toggleLabel, {marginLeft: 10}]}>Active Projects</Text>
                   <Switch
                     value={showActiveProjects}
                     onValueChange={setShowActiveProjects}

@@ -5,14 +5,15 @@ const SignInUser = (email, password, login, onSuccess, onError) => {
 
     const auth = getAuth();
 
-    signInWithEmailAndPassword(auth, email, password, onSuccess, onError)
-        .then((userCredential) => {
+    signInWithEmailAndPassword(auth, email, password)
+        .then(async (userCredential) => {  
             const user = {
                 userId: userCredential.user.uid,
                 email: userCredential.user.email,
                 token: userCredential.user.stsTokenManager.accessToken,
                 refreshToken: userCredential.user.stsTokenManager.refreshToken
             };
+
             Alert.alert('Sign In Successful!', `Welcome back, ${userCredential.user.email}!`, [
                 {
                     text: 'OK',
@@ -21,6 +22,8 @@ const SignInUser = (email, password, login, onSuccess, onError) => {
                     }
                 }
             ]);
+
+          
         })
         .catch((error) => {
             console.log("Error signing in: ", error.message);

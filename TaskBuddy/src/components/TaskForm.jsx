@@ -9,6 +9,7 @@ import { createNewTask } from '../FireBaseInteraction/manageTasks';
 import { roundToNearestQuarter, convertToUTCZ } from '../utility/timeModifier';
 import ImagePickerModal from './ImagePickerModal';
 import PropTypes from 'prop-types';
+import { height, width } from '../utility/DimensionsUtility';
 
 const TaskFormModal = ({ isVisible, onClose }) => {
   const [taskName, setTaskName] = useState('');
@@ -50,7 +51,7 @@ const TaskFormModal = ({ isVisible, onClose }) => {
       setError('');
     }
     hideEndDatePicker();
-  };
+};
 
   useFocusEffect(
     useCallback(() => {
@@ -60,7 +61,6 @@ const TaskFormModal = ({ isVisible, onClose }) => {
             getProjectsFromUsers((data) => resolve(data));
           });
           const projectActiveList = projectData.filter((project) => project.projectActive === true);
-          console.log("ProjectData",projectData)
           const record = projectActiveList.map(({ project, projectName }) => ({ project, projectName }));
           setProjectRecord(record);
         } catch (error) {
@@ -74,7 +74,6 @@ const TaskFormModal = ({ isVisible, onClose }) => {
 
   const handleSubmit = async () => {
     setError('');
-    console.log("vghvghv")
 
     if(!taskName)
     {
@@ -83,11 +82,9 @@ const TaskFormModal = ({ isVisible, onClose }) => {
     }
 
     if (!taskName || !startDatetime || !selectedProject) {
-      console.log("chgcvhgvg")
 
       if(taskName && startDatetime && !selectedProject)
       {
-        console.log("ca.fcg")
         Alert.alert('Is this your personal task ?','Only personal tasks should be created without a project.',[{
           text:'No',
           onPress: () => {
@@ -101,7 +98,6 @@ const TaskFormModal = ({ isVisible, onClose }) => {
       }]);
       }
       else{
-        console.log("callled")
         createProfessionalTask();
       }
     }
@@ -114,9 +110,6 @@ const TaskFormModal = ({ isVisible, onClose }) => {
   const createPersonalTask = async () => {
 
     const Default_Project_Id = await getDefaultProjectId();
-
-    console.log("DefP",Default_Project_Id);
-
     const repStartDateTime = await roundToNearestQuarter(startDatetime);
     const repEndDateTime = await roundToNearestQuarter(endDatetime);
 
@@ -126,9 +119,9 @@ const TaskFormModal = ({ isVisible, onClose }) => {
       repStartDateTime,
       endDatetime: convertToUTCZ(endDatetime),
       repEndDateTime,
-      expense:{expenseAmount: expenseAmount,
+      expense:[{expenseAmount: expenseAmount,
       expenseDescription: expenseDescription,
-      receiptFile: receiptFile},
+      receiptFile: receiptFile}],
       selectedProject: Default_Project_Id,
     };
 
@@ -150,7 +143,6 @@ const createProfessionalTask = async () => {
 
     const repStartDateTime = await roundToNearestQuarter(startDatetime);
     const repEndDateTime = await roundToNearestQuarter(endDatetime);
-
     const payload = {
       taskName,
       startDatetime: convertToUTCZ(startDatetime),
@@ -177,8 +169,11 @@ const createProfessionalTask = async () => {
     }
   }
 
-  const handleImagePicked = () => setIsImagePickerVisible(false);
-
+  const handleImagePicked = () => 
+    {
+      setIsImagePickerVisible(false);
+    }
+    
   if (!isVisible) return null;
 
   return (
@@ -224,7 +219,7 @@ const createProfessionalTask = async () => {
                 keyboardType="numeric"
               />
               <TextInput style={styles.expenseInput} placeholder='Expense Description' onChangeText={setExpenseDescription}/>
-              <Button mode="outlined" onPress={() => setIsImagePickerVisible(true)} style={styles.receiptButton}>
+              <Button mode="contained" onPress={() => setIsImagePickerVisible(true)} style={styles.receiptButton}>
                 + Receipt
               </Button>
             </View>
@@ -242,12 +237,14 @@ const createProfessionalTask = async () => {
             </View>
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
             <View style={styles.buttonContainer}>
-              <Button mode="contained" onPress={handleSubmit} style={styles.button}>
-                Submit
-              </Button>
+              
               <Button mode="outlined" onPress={onClose} style={styles.button}>
                 Close
               </Button>
+              <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+                Submit
+              </Button>  
+
             </View>
           </View>
         </Card>
@@ -322,22 +319,25 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   expenseContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    height: height * 0.25
   },
   expenseInput: {
     flex: 1,
+    marginVertical: height * 0.015,
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     backgroundColor: '#f9f9f9',
-    marginRight: 10,
+
   },
   receiptButton: {
     height: 48,
     justifyContent: 'center',
+    marginBottom : height * 0.015,
+    marginHorizontal: width * 0.15
   },
   picker: {
     borderWidth: 1,

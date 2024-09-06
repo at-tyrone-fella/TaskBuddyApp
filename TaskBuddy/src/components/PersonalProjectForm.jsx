@@ -95,9 +95,6 @@ const PersonalProjectForm = ({ navigation, setShowSidePanel }) => {
 
     try {
       setErrorMessage('');
-
-      console.log(projectName, budget, selectedClient, startDate, endDate, selectedColor)
-
       const payload = {
         projectName,
         clientId: selectedClient,
@@ -314,11 +311,12 @@ const PersonalProjectForm = ({ navigation, setShowSidePanel }) => {
         {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
         <View style={styles.buttonContainer}>
-          <Button mode="contained" onPress={handleSubmit} style={styles.button}>
-            Create Project
-          </Button>
-          <Button mode="contained" onPress={() => setShowSidePanel(true)} style={styles.button}>
+        
+          <Button mode="outlined" onPress={() => setShowSidePanel(true)} style={styles.button}>
             Back
+          </Button>
+            <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+            Create Project
           </Button>
         </View>
       </View>

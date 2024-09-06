@@ -37,10 +37,10 @@ const Landing = ({ navigation }) => {
           <Card.Title title="Features" />
           <Card.Content>
             <Paragraph style={styles.feature}>- Time Tracking : You can add tasks and monitor them using a calendar view.</Paragraph>
-            <Paragraph style={styles.feature}>- Budget Management : Easily monitor your budget allocation and any overruns.</Paragraph>
+            <Paragraph style={styles.feature}>- Expense Tracking : You can add expenses and monitor them using reports.</Paragraph>
             <Paragraph style={styles.feature}>- Build Teams : Collaborate individually or in teams on projects, while easily tracking expenses and tasks.</Paragraph>
-            <Paragraph style={styles.feature}>- Reporting & Analytics : Explore project information through reports and charts for clear visualization and understanding.</Paragraph>
-            <Paragraph style={styles.feature}>- Reporting & Analytics : Explore project information through reports and charts for clear visualization and understanding.</Paragraph>
+            <Paragraph style={styles.feature}>- Manage Projects and Clients : Manage your clients and projects.</Paragraph>
+            <Paragraph style={styles.feature}>- Reporting  : Explore project information through reports.</Paragraph>
           </Card.Content>
         </Card>
         <Button mode="contained" buttonColor="" onPress={toggleModal} style={styles.button} >Log In / Sign Up</Button>
